@@ -133,4 +133,3 @@ def df_from_scrape(news_headlines):
     df = df.sort_values(by='Data')
     return df
 
-print('hello world')
