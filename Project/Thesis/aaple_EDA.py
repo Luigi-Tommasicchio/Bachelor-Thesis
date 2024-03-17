@@ -168,6 +168,8 @@ results_ret_ar_10.summary()
 
 LLR_test(model_ret_ar_1, model_ret_ar_9, DF=8)
 
+# Il modello migliore è l'AR(10)
+
 # Esaminiamo i residui del modello AR miglior per i prezzi
 df['res_price'] = results_ar_11.resid
 df.res_price.mean()
@@ -259,6 +261,8 @@ print("\nLLR test p-value = " + str(LLR_test(model_ret_ma_8, model_ret_ma_9)))
 
 LLR_test(model_ret_ma_1, model_ret_ma_9, DF=8)
 
+# Il modello migliore è l'MA(9)
+
 
 # Vediamo i residui del modello ma(9)
 df['res_ret_ma_9'] = results_ret_ma_9.resid[1:]
@@ -281,3 +285,61 @@ plt.ylim(-0.2,0.2)
 plt.show()
 
 df.head()
+
+
+
+# ARMA(1,0,1) per i Returns
+sgt.plot_acf(df.returns[1:], zero = False, lags = 40)
+plt.title("ACF for Returns", size = 24)
+plt.ylim(-0.2, 0.2)
+plt.show()
+
+sgt.plot_pacf(df.returns[1:], zero = False, lags = 40)
+plt.title("PACF for Returns", size = 24)
+plt.ylim(-0.2, 0.2)
+plt.show()
+
+model_ret_ar_1_ma_1 = ARIMA(df.returns[1:], order=(1,0,1))
+results_ret_ar_1_ma_1 = model_ret_ar_1_ma_1.fit()
+results_ret_ar_1_ma_1.summary()
+
+model_ret_ar_3_ma_3 = ARIMA(df.returns[1:], order=(3,0,3))
+results_ret_ar_3_ma_3 = model_ret_ar_3_ma_3.fit()
+results_ret_ar_3_ma_3.summary()
+
+LLR_test(model_ret_ar_1_ma_1, model_ret_ar_3_ma_3, DF = 4)
+
+model_ret_ar_8_ma_8 = ARIMA(df.returns[1:], order=(8,0,8))
+results_ret_ar_8_ma_8 = model_ret_ar_8_ma_8.fit()
+results_ret_ar_8_ma_8.summary()
+
+model_ret_ar_7_ma_8 = ARIMA(df.returns[1:], order=(7,0,8))
+results_ret_ar_7_ma_8 = model_ret_ar_7_ma_8.fit()
+results_ret_ar_7_ma_8.summary()
+
+model_ret_ar_7_ma_7 = ARIMA(df.returns[1:], order=(7,0,7))
+results_ret_ar_7_ma_7 = model_ret_ar_7_ma_7.fit()
+results_ret_ar_7_ma_7.summary()
+
+model_ret_ar_7_ma_6 = ARIMA(df.returns[1:], order=(7,0,6))
+results_ret_ar_7_ma_6 = model_ret_ar_7_ma_6.fit()
+results_ret_ar_7_ma_6.summary()
+
+LLR_test(model_ret_ar_1_ma_1, model_ret_ar_7_ma_7, DF = 12)
+
+# Il modello migliore è l'ARMA(7,7)
+
+# Prendiamo i residui del modello ARMA(7,7)
+df['res_ret_ar_7_ma_7'] = results_ret_ar_7_ma_7.resid[1:]
+
+df.res_ret_ar_7_ma_7.plot(figsize = (15,5))
+plt.title('Residuals of returns', size = 24)
+plt.show()
+
+sgt.plot_acf(df.res_ret_ar_7_ma_7[2:], zero = False, lags = 40)
+plt.title('ACF of Residuals for Returns', size = 24)
+plt.ylim(-0.2,0.2)
+plt.show()
+
+print("ARMA(7,7): \tLL = ", results_ret_ar_7_ma_7.llf,
+       "\tAIC = ", results_ret_ar_7_ma_7.aic)
