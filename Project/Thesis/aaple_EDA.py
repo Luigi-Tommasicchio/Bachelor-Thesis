@@ -31,13 +31,14 @@ df.Date = pd.to_datetime(df.Date).dt.date
 print(df.head())
 print(df.Date.describe())
 
-# Setto la frequenza come business days
-df = df.asfreq('b', method='ffill') 
-df.head()
-
 # Setto l'indice
 df.set_index('Date', inplace = True)
 df.head()
+
+# Setto la frequenza come business days
+df = df.asfreq('b') 
+df.isna().sum()
+df = df.ffill()
 df.isna().sum()
 
 # Split the data
@@ -84,10 +85,6 @@ plt.title('PACF for Closing Price', size = 24)
 plt.ylim(-0.2, 1.1)
 plt.show()
 
-
-# ciaoo
-
-
 # AR(1) Model
 from statsmodels.tsa.arima.model import ARIMA
 
@@ -120,6 +117,7 @@ def LLR_test(mod_1, mod_2, DF=1):
     return p
 
 LLR_test(model_ar, model_ar_11, DF=10)
+
 
 
 # Calcoliamo i returns
@@ -201,3 +199,85 @@ plt.show()
 df.res_ret[1:].plot(figsize=(15,5))
 plt.title("Residuals of Returns", size=24)
 plt.show()
+
+
+
+
+
+
+
+
+# MA(1) per i Returns
+sgt.plot_acf(df.returns[1:], zero = False, lags = 40)
+plt.title("ACF for Returns", size = 24)
+plt.ylim(-0.2, 0.2)
+plt.show()
+
+model_ret_ma_1 = ARIMA(df.returns[1:], order = (0,0,1))
+results_ret_ma_1 = model_ret_ma_1.fit()
+results_ret_ma_1.summary()
+
+model_ret_ma_2 = ARIMA(df.returns[1:], order = (0,0,2))
+results_ret_ma_2 = model_ret_ma_2.fit()
+print(results_ret_ma_2.summary())
+print("\nLLR test p-value = " + str(LLR_test(model_ret_ma_1, model_ret_ma_2)))
+
+model_ret_ma_3 = ARIMA(df.returns[1:], order = (0,0,3))
+results_ret_ma_3 = model_ret_ma_3.fit()
+print(results_ret_ma_3.summary())
+print("\nLLR test p-value = " + str(LLR_test(model_ret_ma_2, model_ret_ma_3)))
+
+model_ret_ma_4 = ARIMA(df.returns[1:], order = (0,0,4))
+results_ret_ma_4 = model_ret_ma_4.fit()
+print(results_ret_ma_4.summary())
+print("\nLLR test p-value = " + str(LLR_test(model_ret_ma_3, model_ret_ma_4)))
+
+model_ret_ma_5 = ARIMA(df.returns[1:], order = (0,0,5))
+results_ret_ma_5 = model_ret_ma_5.fit()
+print(results_ret_ma_5.summary())
+print("\nLLR test p-value = " + str(LLR_test(model_ret_ma_4, model_ret_ma_5)))
+
+model_ret_ma_6 = ARIMA(df.returns[1:], order = (0,0,6))
+results_ret_ma_6 = model_ret_ma_6.fit()
+print(results_ret_ma_6.summary())
+print("\nLLR test p-value = " + str(LLR_test(model_ret_ma_5, model_ret_ma_6)))
+
+model_ret_ma_7 = ARIMA(df.returns[1:], order = (0,0,7))
+results_ret_ma_7 = model_ret_ma_7.fit()
+print(results_ret_ma_7.summary())
+print("\nLLR test p-value = " + str(LLR_test(model_ret_ma_6, model_ret_ma_7)))
+
+model_ret_ma_8 = ARIMA(df.returns[1:], order = (0,0,8))
+results_ret_ma_8 = model_ret_ma_8.fit()
+print(results_ret_ma_8.summary())
+print("\nLLR test p-value = " + str(LLR_test(model_ret_ma_7, model_ret_ma_8)))
+
+model_ret_ma_9 = ARIMA(df.returns[1:], order = (0,0,9))
+results_ret_ma_9 = model_ret_ma_9.fit()
+print(results_ret_ma_9.summary())
+print("\nLLR test p-value = " + str(LLR_test(model_ret_ma_8, model_ret_ma_9)))
+
+LLR_test(model_ret_ma_1, model_ret_ma_9, DF=8)
+
+
+# Vediamo i residui del modello ma(9)
+df['res_ret_ma_9'] = results_ret_ma_9.resid[1:]
+df.head()
+
+
+print('The Mean of the residuals: ' + str(round(df.res_ret_ma_9.mean(),3)) + 
+      '\nThe Variance of the Residuals: '+ str(round(df.res_ret_ma_9.var(),3)))
+round(np.sqrt(df.res_ret_ma_9.var()),3)
+
+df.res_ret_ma_9[1:].plot(figsize = (15,5))
+plt.title("Residuals of Returns", size = 24)
+plt.show()
+
+adf_test(df.res_ret_ma_9[2:])
+
+sgt.plot_acf(df.res_ret_ma_9[2:], zero = False, lags = 40)
+plt.title("ACF Of Residuals for Returns",size=24)
+plt.ylim(-0.2,0.2)
+plt.show()
+
+df.head()
