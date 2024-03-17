@@ -85,7 +85,7 @@ plt.ylim(-0.2, 1.1)
 plt.show()
 
 
-
+# ciaoo
 
 
 # AR(1) Model
@@ -202,9 +202,6 @@ df.res_ret[1:].plot(figsize=(15,5))
 plt.title("Residuals of Returns", size=24)
 plt.show()
 
-
-
-print('Hello World!')
 
 
 
