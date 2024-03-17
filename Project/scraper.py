@@ -132,3 +132,5 @@ def df_from_scrape(news_headlines):
     df['Data'] = pd.to_datetime(df['Data'])
     df = df.sort_values(by='Data')
     return df
+
+print('hello world')

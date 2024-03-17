@@ -201,39 +201,3 @@ plt.show()
 df.res_ret[1:].plot(figsize=(15,5))
 plt.title("Residuals of Returns", size=24)
 plt.show()
-
-
-
-
-
-
-# Formatto la data nel datatype corretto
-df['Date'] = pd.to_datetime(df['Date'])
-
-# Imposto la data come indice del dataframe
-df = df.set_index('Date').asfreq('d', method='ffill')
-print(df.head())
-
-start_date = '2022-09-14'
-end_date = '2023-12-29'
-
-# Creo un nuovo dateframe che parte da start date e finisce a end date
-new_df = df.loc[start_date:end_date]
-print(new_df)
-
-# Importo il csv con i valori della sentiment analysis
-sentiment = pd.read_csv('aapl_sentiment.csv')
-sentiment['Data'] = pd.to_datetime(sentiment['Data'])
-
-sentiment = sentiment.set_index('Data').asfreq('d', method='ffill')
-
-sentiment = sentiment.loc[start_date:end_date]
-
-print(len(sentiment) == len(new_df))
-
-new_df['Sentiment'] = sentiment['compound']
-df = new_df
-print(df)
-
-df.to_csv('aapl_with_sentiment.csv')
-
