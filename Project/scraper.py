@@ -103,7 +103,7 @@ print('Numero Headlines: '+ str(n_headlines))
 '''
 
 # Estrai la prima linea, la seconda linea e il tempo da ogni stringa e aggiungili alle liste delle colonne
-def df_from_scrape(news_headlines):
+def df_from_scrape(news_headlines, save=False, name=""):
     titolo = []
     data_formattata = []
 
@@ -131,5 +131,9 @@ def df_from_scrape(news_headlines):
     df = pd.DataFrame({'Data': data_formattata, 'Titolo': titolo})
     df['Data'] = pd.to_datetime(df['Data'])
     df = df.sort_values(by='Data')
+
+    if save:
+        df.to_csv(f'{name}.csv',index=False)
+        
     return df
 
