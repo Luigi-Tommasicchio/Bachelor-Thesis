@@ -10,14 +10,14 @@ import pandas as pd
 from datetime import datetime
 import matplotlib.pyplot as plt
 
-def scrape_news_headlines(url, max_iterations=5):
+def scrape_news_headlines(url, max_iterations=5, mac=False, windows=False):
     # Opzioni per il browser
     options = Options()
     options.headless = True  # Esegui il browser in modalità headless
 
     # Path del driver del browser
-    chrome_driver_path = "C:\\Users\\luigi\\Desktop\\driver\\chromedriver.exe"  # Inserisci il percorso del tuo driver
-
+    chrome_driver_path = "/Users/luigi/Desktop/Thesis2/Thesis2/Project/chromedriver_mac"
+    
     # Inizializza il browser
     service = Service(chrome_driver_path)
     driver = webdriver.Chrome(service=service, options=options)
@@ -79,28 +79,7 @@ def scrape_news_headlines(url, max_iterations=5):
 
     return all_headlines
 
-'''
-# URL della pagina delle news headlines
-url = "https://www.nasdaq.com/market-activity/stocks/aapl/news-headlines"
 
-# Chiama la funzione di scraping
-news_headlines = scrape_news_headlines(url, max_iterations=1250)
-
-# Stampa le news headlines
-if news_headlines:
-    for headline in news_headlines:
-        print(headline)
-else:
-    print("Impossibile ottenere le news headlines.")
-
-
-# Stampa il numero di headlines scaricate
-n_headlines = len(news_headlines)
-print('Numero Headlines: '+ str(n_headlines))
-
-# Inizializza liste vuote per le colonne del DataFrame
-#data_scraped = []
-'''
 
 # Estrai la prima linea, la seconda linea e il tempo da ogni stringa e aggiungili alle liste delle colonne
 def df_from_scrape(news_headlines, save=False, name=""):
@@ -137,3 +116,22 @@ def df_from_scrape(news_headlines, save=False, name=""):
         
     return df
 
+# Dichiaro il ticker
+ticker = 'aapl'
+
+# Inserisco il ticker nel link
+url = f'https://www.nasdaq.com/market-activity/stocks/{ticker}/news-headlines'
+
+# Scarico le headlines degli articoli dal sito nasdaq.com e le assegno ad una lista
+headlines = scrape_news_headlines(url, max_iterations=5)
+
+print(type(headlines))
+print(headlines[:1])        # Stampo il primo elemento della lista per capire il tipo
+                            # stringa che dobbiamo formattare
+
+# Formatto le headlines separando la data dal titolo della notizia e creo un dataframe
+# con una colonna per la data ed una colonna per il titolo
+aapl_headlines = df_from_scrape(headlines, save=True)
+
+# Stampo le prime righe del dataframe
+print(aapl_headlines.head())
