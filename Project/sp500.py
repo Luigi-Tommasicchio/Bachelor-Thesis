@@ -9,25 +9,38 @@ from statsmodels.tsa.statespace.sarimax import SARIMAX
 import numpy as np
 from pmdarima.arima import auto_arima
 from scipy.stats import chi2
+import mplfinance as mpf
 
 
-ticker = 'NVDA'
-data = yf.Ticker(ticker).history(ticker, start = '2022-08-24', end = '2024-03-15', interval='1d')[['Open', 'Close', 'High', 'Low', 'Volume']]
+
+# Scarico i dati da Yahoo Finance
+ticker = 'AAPL'
+data = yf.Ticker(ticker).history(ticker, start = '2023-03-18', end = '2024-03-18', interval='1h')[['Open', 'Close', 'High', 'Low', 'Volume']]
 
 
-# Printing the first rows of the DataFrame and adjusting the date index
+# Formatto l'indice come Datetime
 data = data.reset_index()
-data['Date'] = data['Date'].dt.date
-data.set_index('Date', inplace=True)
+data['Datetime'] = pd.to_datetime(data['Datetime'])
+data.set_index('Datetime', inplace=True)
+print(type(data.index))
+
+# Stampo le prime righe del Dataframe
 print(data.head())
+
+# Plotto i dati come Candlestick Chart
+mpf.plot(data, type='candle',volume=True, style='charles', title='Candlestick Chart AAPL', ylabel='Prezzo', ylabel_lower='Volume',
+         show_nontrading=False, mav = (10,50,200))
+
 
 
 # Estrazione della serie temporale dei prezzi di chiusura
-close_prices = data['Close']
+close= data['Close']
+print(close)
+
 
 # Esecuzione del test di Dickey-Fuller Aumentato (ADF) per verificare la stazionarietà
-adf_result = adfuller(close_prices)
-
+adf_result = adfuller(close)
+print(adf_result)
 # Visualizzazione dei risultati del test ADF
 adf_output = pd.Series(adf_result[0:4], index=['Test Statistic','p-value','Lags Used','Number of Observations Used'])
 for key,value in adf_result[4].items():
@@ -37,7 +50,7 @@ print(adf_output)
 
 
 # Calculating daily returns
-returns = np.log(close_prices / close_prices.shift(1)).dropna()
+returns = np.log(close / close.shift(1)).dropna()
 
 # Re-executing the Augmented Dickey-Fuller (ADF) test on daily returns
 adf_result_returns = adfuller(returns)
