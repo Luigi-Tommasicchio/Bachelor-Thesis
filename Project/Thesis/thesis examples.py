@@ -132,41 +132,34 @@ def adf_test(column):
     adf_output = pd.Series(adf_result[0:4], index=['Test Statistic','P-value','Lags Used','Number of Observations Used'])
     for key, value in adf_result[4].items():
         adf_output[f'Critical Value ({key})'] = value
-
     return adf_output
+    
 
 # Esecuzione del test di Dickey-Fuller Aumentato (ADF) per ciascuna serie
-def adf_table(columns = []):
+def adf_table(data, columns = []):
     table = pd.DataFrame()
     for i in range(0,len(columns)):
-        adf = adf_test(sp500[str(columns[i])])
+        adf = adf_test(data[str(columns[i])])
         table[str(columns[i])] = adf
+        table
+    table = table.round(decimals=4)
     return table
 
-adf_table = adf_table(columns=['Close', 'wn', 'rw'])
+adf_table = adf_table(sp500, columns=['Close', 'wn', 'rw'])
 print(adf_table)
 
-# Round dei valori nel DataFrame con un numero massimo di decimali
-adf_table_rounded = adf_table.round(decimals=4)
-
-# Plot
+# Creo una tabella con gli uotput dei ADF tests
 fig, ax = plt.subplots(figsize=(10, 6))
-
-# Rimuovi gli assi
 ax.axis('off')
-
-# Crea la tabella con i valori arrotondati del DataFrame
-table = ax.table(cellText=adf_table_rounded.values,
-                 colLabels=adf_table_rounded.columns,
-                 rowLabels=adf_table_rounded.index,
+table = ax.table(cellText=adf_table.values,
+                 colLabels=adf_table.columns,
+                 rowLabels=adf_table.index,
                  cellLoc='right',
                  loc='center',
-                 bbox=[0.3, 0.3, 0.77, 0.5])  # Imposta la posizione e le dimensioni della tabella
+                 bbox=[0.3, 0.3, 0.77, 0.5])
 
-# Imposta lo stile della tabella
 table.auto_set_font_size(False)
 table.set_fontsize(12)
-table.scale(1, 1)  # Imposta la dimensione della tabella
+table.scale(1, 1) 
 
-# Mostra la tabella
 plt.show()
