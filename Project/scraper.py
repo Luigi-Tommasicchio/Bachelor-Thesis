@@ -16,7 +16,7 @@ def scrape_news_headlines(url, max_iterations=5, mac=False, windows=False):
     options.headless = True  # Esegui il browser in modalità headless
 
     # Path del driver del browser
-    chrome_driver_path = "/Users/luigi/Desktop/Thesis2/Thesis2/Project/chromedriver_mac"
+    chrome_driver_path = "chrome_drivers\chromedriver_windows.exe"
     
     # Inizializza il browser
     service = Service(chrome_driver_path)
