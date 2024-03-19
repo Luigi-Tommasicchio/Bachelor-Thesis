@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
 import statsmodels.tsa.stattools as sts
+from statsmodels.tsa.stattools import adfuller
 from statsmodels.tsa.seasonal import seasonal_decompose
 
 
@@ -163,3 +164,32 @@ table.set_fontsize(12)
 table.scale(1, 1) 
 
 plt.show()
+
+
+
+# Decomposizione della serie temporale
+result = seasonal_decompose(sp500['Close'], model='additive', period=252)
+result.plot()
+plt.show()
+
+# Estrazione della serie senza trend
+close_senza_trend = result.observed - result.trend
+close_senza_trend.isna().sum()
+close_senza_trend.fillna(0, inplace=True)
+
+close_senza_trend.plot(figsize = (15,7), color='blue', label = 'Prezzi di Chiusura senza Trend')
+plt.title('Prezzi di Chiusura senza Trend', size=24, pad=15)
+plt.yticks(size=15)
+plt.xticks(size=15)
+plt.xlim(sp500.index.min(), sp500.index.max())
+plt.ylabel('Prezzo $', size=20, labelpad=13)
+plt.xlabel('Data', size=20, labelpad=13)
+plt.show()
+
+sp500 = sp500.assign(close_senza_trend=close_senza_trend)
+
+tabella = adf_table(sp500, columns=['close_senza_trend'])
+print(tabella)
+
+
+
