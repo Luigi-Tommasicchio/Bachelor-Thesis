@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
 # Carica il DataFrame dal file CSV
-df = pd.read_csv('aapl_headlines.csv')
+df = pd.read_csv('Project\\aapl_headlines.csv')
 df['Data'] = pd.to_datetime(df['Data'])
 
 # Inizializza l'analizzatore di sentimenti VADER
