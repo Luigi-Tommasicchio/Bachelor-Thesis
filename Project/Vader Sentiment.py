@@ -3,14 +3,14 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 
 from urllib.request import urlopen, Request
-#nltk.download('vader_lexicon')
+nltk.download('vader_lexicon')
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 import nltk
 from bs4 import BeautifulSoup
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 
 # Carica il DataFrame dal file CSV
-df = pd.read_csv('Project\\aapl_headlines.csv')
+df = pd.read_csv('Project/aapl_headlines.csv')
 df['Data'] = pd.to_datetime(df['Data'])
 
 # Inizializza l'analizzatore di sentimenti VADER
