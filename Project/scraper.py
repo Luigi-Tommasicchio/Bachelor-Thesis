@@ -16,7 +16,7 @@ def scrape_news_headlines(url, max_iterations=5, mac=False, windows=False):
     options.headless = True  # Esegui il browser in modalità headless
 
     # Path del driver del browser
-    chrome_driver_path = "chrome_drivers\chromedriver_windows.exe"
+    chrome_driver_path = "chrome_drivers/chromedriver_mac"
     
     # Inizializza il browser
     service = Service(chrome_driver_path)
@@ -123,7 +123,7 @@ ticker = 'aapl'
 url = f'https://www.nasdaq.com/market-activity/stocks/{ticker}/news-headlines'
 
 # Scarico le headlines degli articoli dal sito nasdaq.com e le assegno ad una lista
-headlines = scrape_news_headlines(url, max_iterations=5)
+headlines = scrape_news_headlines(url, max_iterations=100)
 
 print(type(headlines))
 print(headlines[:1])        # Stampo il primo elemento della lista per capire il tipo
