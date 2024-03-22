@@ -15,7 +15,7 @@ len(apple_test)
 apple_train.tail()
 apple_test.head()
 
-model = ExponentialSmoothing(apple_train['Close'], trend='add', seasonal='mul', seasonal_periods=)
+model = ExponentialSmoothing(apple_train['Close'], trend='add', seasonal='mul', seasonal_periods=252)
 hw_model = model.fit()
 hw_model.summary()
 
