@@ -34,3 +34,28 @@ fig, ax = mpf.plot(apple, type='candle',volume=True, style='yahoo',
                 figratio=(4,3), figscale=1.2, xrotation=45, returnfig=True)
 ax[0].set_title('Candlestick chart AAPL', fontsize=16, loc='center')
 plt.show()
+
+
+# Calcolo delle correlazioni tra le colonne del dataframe
+corr = apple.select_dtypes('number').corr()
+
+# Creazione del grafico a matrice di correlazione
+import seaborn as sns
+
+# Creazione del heatmap delle correlazioni con Seaborn
+plt.figure(figsize=(10, 8))
+sns.heatmap(corr, annot=True, cmap='Blues', fmt=".2f")
+sns.set_theme(font_scale=1.5)
+plt.grid(None)
+plt.title('Heatmap delle Correlazioni', size=30, y=1.02)
+plt.show()
+
+# Differenziare una serie e normalizzarla
+import numpy as np
+apple_diff = apple['Close'].diff()
+apple_close = apple.Close[0] + apple_diff.cumsum()
+apple_close.plot(label='Integrated')
+apple['Close'].plot(label='original',linestyle='dotted', color='r', linewidth=2)
+plt.legend()
+plt.show()
+
