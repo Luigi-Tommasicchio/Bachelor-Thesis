@@ -127,9 +127,9 @@ plt.show()
 
 # Step 1: Scarica i dati storici dei prezzi delle azioni dell'S&P 500 da una fonte come Yahoo Finance
 # Assumiamo che i dati siano già stati scaricati e caricati in un DataFrame pandas chiamato 'data'
-test = data[['AAPL','MSFT']]
+test = data[['KO','WMT']]
 # Step 2: Calcola i rendimenti giornalieri per ciascuna azione
-returns = test.pct_change()
+returns = test.pct_change(1)*100
 
 # Step 3: Calcola il rendimento atteso e la covarianza dei rendimenti per tutte le azioni
 mean_returns = returns.mean()
@@ -177,13 +177,14 @@ efficient_portfolio_data = portfolio_data[portfolio_data['Return'] >= min_std_de
 
 
 plt.figure(figsize=(10, 6))
-plt.scatter(efficient_portfolio_data['Std Dev'], efficient_portfolio_data['Return'], alpha=0.3, color='blue')
-plt.scatter(inefficient_portfolio_data['Std Dev'], inefficient_portfolio_data['Return'], alpha=0.3, color='red')
-plt.axhline(y=min_std_dev, color='black', linestyle='--', label='Min Volatility Portfolio')
+plt.scatter(efficient_portfolio_data['Std Dev'], efficient_portfolio_data['Return'], alpha=0.3, color='blue', label='Portafogli Efficienti')
+plt.scatter(inefficient_portfolio_data['Std Dev'], inefficient_portfolio_data['Return'], alpha=0.3, color='red', label='Portafogli Inefficienti')
+plt.axhline(y=min_std_dev, color='black', linestyle='--', lw=2)
 plt.xlabel('Deviazione Standard')
 plt.ylabel('Rendimento atteso')
 plt.title('Tutte le varie combinazioni di portafogli')
 plt.grid(True)
+plt.legend()
 plt.show()
 
 
