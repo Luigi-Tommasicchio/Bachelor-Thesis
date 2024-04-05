@@ -73,40 +73,40 @@ data.isna().sum().sum()
 (data / data.iloc[0]*100).plot(figsize=(15,6))
 plt.show()
 
-log_returns = np.log(data / data.shift(1))
+returns = data.pct_change(1)*100
 
-log_returns.mean()*250
+returns.mean()*250
 
-log_returns.cov()*250
+returns.cov()*250
 
-log_returns.corr()
+returns.corr()
 
 num_assets = len(sp500_tickers)-4
 num_assets
 
 weights = np.random.random(num_assets)
 weights /= np.sum(weights)
-weights
+weights = np.round(weights, 5)
 
-np.sum(weights * log_returns.mean())*252
+np.sum(weights * returns.mean())*252
 
-np.dot(weights.T, np.dot(log_returns.cov() *252, weights))
+np.dot(weights.T, np.dot(returns.cov() *252, weights))
 
-print(f"Expected Portfolio Return: {round(np.sum(weights * log_returns.mean())*252*100,2)}%")
-print(f"Expected Portfolio Variance: {round(100*np.dot(weights.T, np.dot(log_returns.cov() *252, weights)),2)}%")
-print(f"Expected Portfolio Volatility: {round(100*np.sqrt(np.dot(weights.T, np.dot(log_returns.cov()*252, weights))),2)}%")
+print(f"Expected Portfolio Return: {round(np.sum(weights * returns.mean())*252*100,2)}%")
+print(f"Expected Portfolio Variance: {round(100*np.dot(weights.T, np.dot(returns.cov() *252, weights)),2)}%")
+print(f"Expected Portfolio Volatility: {round(100*np.sqrt(np.dot(weights.T, np.dot(returns.cov()*252, weights))),2)}%")
 
-np.sqrt(np.dot(weights.T, np.dot(log_returns.cov()*252, weights)))
+np.sqrt(np.dot(weights.T, np.dot(returns.cov()*252, weights)))
 
 pfolio_returns = []
 pfolio_volatilities = []
 
-for x in range(100):
+for x in range(1000):
     weights = np.random.random(num_assets)
     weights /= np.sum(weights)
     
-    pfolio_returns.append(np.sum(weights*log_returns.mean())*252)
-    pfolio_volatilities.append(np.sqrt(np.dot(weights.T, np.dot(log_returns.cov()*250, weights))))
+    pfolio_returns.append(np.sum(weights*returns.mean())*252)
+    pfolio_volatilities.append(np.sqrt(np.dot(weights.T, np.dot(returns.cov()*250, weights))))
     
 pfolio_returns = np.array(pfolio_returns)
 pfolio_volatilities = np.array(pfolio_volatilities)
@@ -125,13 +125,13 @@ plt.show()
 
 
 
-# Step 1: Scarica i dati storici dei prezzi delle azioni dell'S&P 500 da una fonte come Yahoo Finance
-# Assumiamo che i dati siano già stati scaricati e caricati in un DataFrame pandas chiamato 'data'
+# Scegliamo le azioni da includere nel portafoglio
 test = data[['KO','WMT']]
-# Step 2: Calcola i rendimenti giornalieri per ciascuna azione
+
+# Calcolo i rendimenti giornalieri per ciascuna azione
 returns = test.pct_change(1)*100
 
-# Step 3: Calcola il rendimento atteso e la covarianza dei rendimenti per tutte le azioni
+# Calcolo il rendimento atteso e la covarianza dei rendimenti per tutte le azioni
 mean_returns = returns.mean()
 cov_matrix = returns.cov()
 
@@ -143,23 +143,23 @@ portfolio_returns = []
 portfolio_std_devs = []
 weight = []
 
-# Genera e valuta i portafogli casuali
+# Genero i portafogli casuali
 for i in range(num_portfolios):
-    # Genera pesi casuali per il portafoglio
+    # Genero pesi casuali per il portafoglio
     weights = np.random.random(len(mean_returns))
     weights /= np.sum(weights)
     weights = np.round(weights, 5)
     
-    # Calcola il rendimento e la deviazione standard del portafoglio
+    # Calcolo il rendimento e la deviazione standard del portafoglio
     portfolio_return = np.sum(mean_returns * weights) * 252
     portfolio_std_dev = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights))) * np.sqrt(252)
     
-    # Aggiungi i risultati alla lista
+    # Aggiungo i risultati alla lista
     weight.append(weights)
     portfolio_returns.append(portfolio_return)
     portfolio_std_devs.append(portfolio_std_dev)
 
-# Converti le liste in un DataFrame pandas
+# Converto le liste in un DataFrame pandas
 portfolio_data = pd.DataFrame({'Return': portfolio_returns, 'Std Dev': portfolio_std_devs, 'Weights': weight})
 portfolio_data
 
@@ -175,7 +175,6 @@ min_std_dev
 inefficient_portfolio_data = portfolio_data[portfolio_data['Return'] < min_std_dev]
 efficient_portfolio_data = portfolio_data[portfolio_data['Return'] >= min_std_dev]
 
-
 plt.figure(figsize=(10, 6))
 plt.scatter(efficient_portfolio_data['Std Dev'], efficient_portfolio_data['Return'], alpha=0.3, color='blue', label='Portafogli Efficienti')
 plt.scatter(inefficient_portfolio_data['Std Dev'], inefficient_portfolio_data['Return'], alpha=0.3, color='red', label='Portafogli Inefficienti')
@@ -186,7 +185,3 @@ plt.title('Tutte le varie combinazioni di portafogli')
 plt.grid(True)
 plt.legend()
 plt.show()
-
-
-
-
