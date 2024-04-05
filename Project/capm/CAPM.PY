@@ -59,24 +59,21 @@ sp500_tickers = scrape_sp500_tickers()
 print(sp500_tickers)
 
 
+data = pd.DataFrame()
 
-assets = ['MSFT','AAPL','TSLA','GOOG']
+data = yf.download(sp500_tickers, start='2024-01-01', end='2024-04-01', interval='1d')['Adj Close']
 
-pf_data = pd.DataFrame()
+del data['BRK.B']
+del data['SOLV']
+del data['GEV']
+del data['BF.B']
 
-pf_data = yf.download(sp500_tickers, start='2024-01-01', end='2024-04-01', interval='1d')['Adj Close']
+data.isna().sum().sum()
 
-del pf_data['BRK.B']
-del pf_data['SOLV']
-del pf_data['GEV']
-del pf_data['BF.B']
-
-pf_data.isna().sum().sum()
-
-(pf_data / pf_data.iloc[0]*100).plot(figsize=(15,6))
+(data / data.iloc[0]*100).plot(figsize=(15,6))
 plt.show()
 
-log_returns = np.log(pf_data / pf_data.shift(1))
+log_returns = np.log(data / data.shift(1))
 
 log_returns.mean()*250
 
@@ -104,7 +101,7 @@ np.sqrt(np.dot(weights.T, np.dot(log_returns.cov()*252, weights)))
 pfolio_returns = []
 pfolio_volatilities = []
 
-for x in range(1000):
+for x in range(100):
     weights = np.random.random(num_assets)
     weights /= np.sum(weights)
     
@@ -128,69 +125,67 @@ plt.show()
 
 
 
+# Step 1: Scarica i dati storici dei prezzi delle azioni dell'S&P 500 da una fonte come Yahoo Finance
+# Assumiamo che i dati siano già stati scaricati e caricati in un DataFrame pandas chiamato 'data'
+test = data[['AAPL','MSFT']]
+# Step 2: Calcola i rendimenti giornalieri per ciascuna azione
+returns = test.pct_change()
 
+# Step 3: Calcola il rendimento atteso e la covarianza dei rendimenti per tutte le azioni
+mean_returns = returns.mean()
+cov_matrix = returns.cov()
 
+# Numero di portafogli generati casualmente
+num_portfolios = 10000
 
+# Lista vuota per i risultati
+portfolio_returns = []
+portfolio_std_devs = []
+weight = []
 
-
-
-
-pf_data = yf.download('^GSPC', start='2024-01-01', end='2024-04-01', interval='1d')['Adj Close']
-
-returns  = (pf_data.pct_change(1)*100)[1:]
-returns
-
-expected_return = sum(returns*(1/len(pf_data)))
-expected_return
-
-pf_data.isna().sum().sum()
-
-(pf_data / pf_data.iloc[0]*100).plot(figsize=(15,6))
-plt.show()
-
-log_returns = np.log(pf_data / pf_data.shift(1))
-
-log_returns.mean()*250
-
-log_returns.cov()*250
-
-log_returns.corr()
-
-num_assets = 1
-num_assets
-
-weights = np.random.random(num_assets)
-weights /= np.sum(weights)
-weights
-
-np.sum(weights * log_returns.mean())*252
-
-np.dot(weights.T, np.dot(log_returns.cov() *252, weights))
-
-print(f"Expected Portfolio Return: {round(np.sum(weights * log_returns.mean())*252*100,2)}%")
-print(f"Expected Portfolio Variance: {round(100*np.dot(weights.T, np.dot(log_returns.cov() *252, weights)),2)}%")
-print(f"Expected Portfolio Volatility: {round(100*np.sqrt(np.dot(weights.T, np.dot(log_returns.cov()*252, weights))),2)}%")
-
-np.sqrt(np.dot(weights.T, np.dot(log_returns.cov()*252, weights)))
-
-pfolio_returns = []
-pfolio_volatilities = []
-
-for x in range(1000):
-    weights = np.random.random(num_assets)
+# Genera e valuta i portafogli casuali
+for i in range(num_portfolios):
+    # Genera pesi casuali per il portafoglio
+    weights = np.random.random(len(mean_returns))
     weights /= np.sum(weights)
+    weights = np.round(weights, 5)
     
-    pfolio_returns.append(np.sum(weights*log_returns.mean())*252)
-    pfolio_volatilities.append(np.sqrt(np.dot(weights.T, np.dot(log_returns.cov()*250, weights))))
+    # Calcola il rendimento e la deviazione standard del portafoglio
+    portfolio_return = np.sum(mean_returns * weights) * 252
+    portfolio_std_dev = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights))) * np.sqrt(252)
     
-pfolio_returns = np.array(pfolio_returns)
-pfolio_volatilities = np.array(pfolio_volatilities)
+    # Aggiungi i risultati alla lista
+    weight.append(weights)
+    portfolio_returns.append(portfolio_return)
+    portfolio_std_devs.append(portfolio_std_dev)
 
-portfolios = pd.DataFrame({'Return':pfolio_returns,'Volatility':pfolio_volatilities})
-portfolios.head()
+# Converti le liste in un DataFrame pandas
+portfolio_data = pd.DataFrame({'Return': portfolio_returns, 'Std Dev': portfolio_std_devs, 'Weights': weight})
+portfolio_data
 
-portfolios.plot(x='Volatility',y='Return', kind='scatter', figsize=(10,6), alpha=0.5)
-#plt.axis([0,])
-plt.xlabel('Expected Volatility')
-plt.ylabel('Expected Return')
+# pesi del portafoglio ottimale con minima standard deviation
+portfolio_data.sort_values(by='Std Dev', ascending=True)[:1]['Weights']
+
+# Plotta tutte le varie combinazioni di portafogli
+min_std_dev = portfolio_data.sort_values(by='Std Dev', ascending=True)[:1]['Return']
+min_std_dev = float(min_std_dev)
+min_std_dev
+
+# Portafogli inefficienti
+inefficient_portfolio_data = portfolio_data[portfolio_data['Return'] < min_std_dev]
+efficient_portfolio_data = portfolio_data[portfolio_data['Return'] >= min_std_dev]
+
+
+plt.figure(figsize=(10, 6))
+plt.scatter(efficient_portfolio_data['Std Dev'], efficient_portfolio_data['Return'], alpha=0.3, color='blue')
+plt.scatter(inefficient_portfolio_data['Std Dev'], inefficient_portfolio_data['Return'], alpha=0.3, color='red')
+plt.axhline(y=min_std_dev, color='black', linestyle='--', label='Min Volatility Portfolio')
+plt.xlabel('Deviazione Standard')
+plt.ylabel('Rendimento atteso')
+plt.title('Tutte le varie combinazioni di portafogli')
+plt.grid(True)
 plt.show()
+
+
+
+
