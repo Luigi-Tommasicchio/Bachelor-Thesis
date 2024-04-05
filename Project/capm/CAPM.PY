@@ -74,9 +74,9 @@ plt.show()
 
 returns = data.pct_change(1)*100
 
-returns.mean()*250
+returns.mean()*252
 
-returns.cov()*250
+returns.cov()*252
 
 returns.corr()
 
@@ -87,15 +87,11 @@ weights = np.random.random(num_assets)
 weights /= np.sum(weights)
 weights = np.round(weights, 5)
 
-np.sum(weights * returns.mean())*252
+print(f"Expected Portfolio Return: {round(np.sum(weights * returns.mean())*252,2)}%")
+print(f"Expected Portfolio Variance: {round(np.dot(weights.T, np.dot(returns.cov() *252, weights)),2)}%")
+print(f"Expected Portfolio Volatility: {round(np.sqrt(np.dot(weights.T, np.dot(returns.cov()*252, weights))),2)}%")
 
-np.dot(weights.T, np.dot(returns.cov() *252, weights))
 
-print(f"Expected Portfolio Return: {round(np.sum(weights * returns.mean())*252*100,2)}%")
-print(f"Expected Portfolio Variance: {round(100*np.dot(weights.T, np.dot(returns.cov() *252, weights)),2)}%")
-print(f"Expected Portfolio Volatility: {round(100*np.sqrt(np.dot(weights.T, np.dot(returns.cov()*252, weights))),2)}%")
-
-np.sqrt(np.dot(weights.T, np.dot(returns.cov()*252, weights)))
 
 pfolio_returns = []
 pfolio_volatilities = []
