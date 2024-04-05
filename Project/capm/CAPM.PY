@@ -4,7 +4,6 @@ from pandas_datareader import data as wb
 import matplotlib.pyplot as plt
 import yfinance as yf
 
-
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
