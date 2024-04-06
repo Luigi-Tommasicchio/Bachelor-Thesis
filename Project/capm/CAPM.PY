@@ -121,7 +121,7 @@ plt.show()
 
 
 # Scegliamo le azioni da includere nel portafoglio
-test = data[['KO','WMT']]
+test = data[['AAPL','MSFT','NVDA', 'GOOG','META']]
 
 # Calcolo i rendimenti giornalieri per ciascuna azione
 returns = test.pct_change(1)*100
@@ -133,11 +133,11 @@ standard_error = np.sqrt(variance)
 cov_matrix = returns.cov()
 
 # Numero di portafogli generati casualmente
-num_portfolios = 10000
+num_portfolios = 1000000
 
 # Lista vuota per i risultati
 portfolio_returns = []
-portfolio_std_errs = []
+portfolio_std_dev = []
 weight = []
 
 # Genero i portafogli casuali
@@ -149,35 +149,58 @@ for i in range(num_portfolios):
     
     # Calcolo il rendimento e la deviazione standard del portafoglio
     portfolio_return = np.sum(mean_returns * weights) * 252
-    portfolio_std_err = np.sqrt((variance[0]*(weights[0]**2)) + (variance[1]*(weights[1]**2)) + 2*cov_matrix['KO'][1]*weights[0]*weights[1])
-    portfolio_std_dev = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights))) * np.sqrt(252)
+    portfolio_std_d = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights))) * np.sqrt(252)
     
     # Aggiungo i risultati alla lista
     weight.append(weights)
     portfolio_returns.append(portfolio_return)
-    portfolio_std_errs.append(portfolio_std_err)
+    portfolio_std_dev.append(portfolio_std_d)
 
 # Converto le liste in un DataFrame pandas
-portfolio_data = pd.DataFrame({'Return': portfolio_returns, 'Std Err': portfolio_std_errs, 'Weights': weight})
+portfolio_data = pd.DataFrame({'Return': portfolio_returns, 'Std Dev': portfolio_std_dev, 'Weights': weight})
 
 # pesi del portafoglio ottimale con minima standard deviation
-portfolio_data.sort_values(by='Std Err', ascending=True)[:1]['Weights']
+portfolio_data.sort_values(by='Std Dev', ascending=True)[:1]['Weights']
 
 # Plotta tutte le varie combinazioni di portafogli
-min_std_dev = portfolio_data.sort_values(by='Std Err', ascending=True)[:1]['Return']
+min_std_dev = portfolio_data.sort_values(by='Std Dev', ascending=True)[:1]['Return']
 min_std_dev = float(min_std_dev)
 
 # Portafogli inefficienti
 inefficient_portfolio_data = portfolio_data[portfolio_data['Return'] < min_std_dev]
-efficient_portfolio_data = portfolio_data[portfolio_data['Return'] >= min_std_dev]
+efficient_portfolio_data = portfolio_data[portfolio_data['Return'] > min_std_dev]
+P_portfolio_data = portfolio_data[portfolio_data['Return'] == min_std_dev]
+
+# Creo un risk free asset
+q = 2  # Intercetta
+m = (min_std_dev-q)/float(P_portfolio_data['Std Dev']) # Pendenza
+m
+
+# Genero alcune coordinate x per tracciare la retta
+x_values = np.linspace(0, portfolio_data['Std Dev'].max(), 1000)  # genero 100 punti
+
+# Calcolo le coordinate y corrispondenti utilizzando l'equazione della retta: y = mx + q
+y_values = m * x_values + q
+
+# Traccia la retta con linestyle='-', che è il valore predefinito per una linea continua
+ylim_min = []
+if portfolio_data['Return'].min() < q:
+    ylim_min.append(portfolio_data['Return'].min()),
+else:
+    ylim_min.append(0)
+ylim_min
 
 plt.figure(figsize=(10, 6))
-plt.scatter(efficient_portfolio_data['Std Err'], efficient_portfolio_data['Return'], alpha=0.3, color='blue', label='Portafogli Efficienti')
-plt.scatter(inefficient_portfolio_data['Std Err'], inefficient_portfolio_data['Return'], alpha=0.3, color='red', label='Portafogli Inefficienti')
-plt.axhline(y=min_std_dev, color='black', linestyle='--', lw=2)
+plt.plot(x_values, y_values, color='green', linestyle='-', linewidth=2)
+plt.scatter(efficient_portfolio_data['Std Dev'], efficient_portfolio_data['Return'], alpha=1, color='blue', label='Portafogli Efficienti')
+plt.scatter(inefficient_portfolio_data['Std Dev'], inefficient_portfolio_data['Return'], alpha=1, color='red', label='Portafogli Inefficienti')
+plt.axhline(y=min_std_dev, color='black', linestyle='--', lw=1.5)
+plt.scatter(P_portfolio_data['Std Dev'], P_portfolio_data['Return'], alpha=1, color='yellow', label='Portafoglo con minor volatilità', edgecolors='black')
 plt.xlabel('Deviazione Standard')
 plt.ylabel('Rendimento atteso')
 plt.title('Tutte le varie combinazioni di portafogli')
 plt.grid(True)
+plt.ylim(ylim_min[0]-2, portfolio_data['Return'].max()+2)
+plt.xlim(0,portfolio_data['Std Dev'].max()+1)
 plt.legend()
 plt.show()
