@@ -14,65 +14,65 @@ from selenium.webdriver.support import expected_conditions as EC
 def scrape_sp500_tickers():
     tickers = []
 
-    # Path to the ChromeDriver executable
-    chrome_driver_path = 'chrome_drivers\\chromedriver_windows.exe'  # Change this to the actual path
-
-    # Set up Chrome options
+    chrome_driver_path = 'chrome_drivers\\chromedriver_windows.exe'  
     chrome_options = Options()
-    chrome_options.add_argument('--headless')  # Run Chrome in headless mode, no GUI
+    chrome_options.add_argument('--headless')  
 
-    # Create a new instance of Chrome driver
     service = Service(chrome_driver_path)
     driver = webdriver.Chrome(service=service, options=chrome_options)
 
-    # URL of the website
     url = "https://www.slickcharts.com/sp500"
 
-    # Navigate to the page
     driver.get(url)
 
-    # Wait for the table to load
+    # Aspetta finchè non appare la tabella con i vari ticker
     WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "table.table.table-hover")))
 
-    # Find the table containing the tickers
+    # Trova la tabella corretta
     table = driver.find_element(By.CSS_SELECTOR, "table.table.table-hover")
 
-    # Find all rows in the table (excluding the header row)
+    # Estrae tutte le riche della tabella ad eccezione dell'header
     rows = table.find_elements(By.TAG_NAME, "tr")[1:]
 
-    # Loop through each row and extract the ticker symbol
+    # Fa un loop attraverso le righe per estrarre tutti i tickers
     for row in rows:
-        # Extract ticker symbol from the first column
+        # Estrae il ticker per ogni riga dalla terza colonna
         ticker = row.find_elements(By.TAG_NAME, "td")[2].text.strip()
         tickers.append(ticker)
 
-    # Quit the browser
+    # Chiude chrome
     driver.quit()
 
     return tickers
 
-# Call the function to scrape the tickers
+# Chiamo la funzione per lo scraping dei tickers
 sp500_tickers = scrape_sp500_tickers()
 
-# Print the list of tickers
+# Stampo la lista di tutti i tickers
 print(sp500_tickers)
 
-
+# Inizializzo un dataframe
 data = pd.DataFrame()
 
+# Scarico i prezzi ci chiusura per ciascun ticker
 data = yf.download(sp500_tickers, start='2024-01-01', end='2024-04-01', interval='1d')['Adj Close']
 
+# Elimino delle colonne con valori mancanti
 del data['BRK.B']
 del data['SOLV']
 del data['GEV']
 del data['BF.B']
 
+# Controllo che non ci siano valori mancanti
 data.isna().sum().sum()
 
-(data / data.iloc[0]*100).plot(figsize=(15,6))
+(data / data.iloc[0]).plot(figsize=(15,6))
 plt.show()
 
-returns = data.pct_change(1)*100
+# Calcolo i rendimenti
+returns = np.round((data.pct_change(1)*100),2)[1:]
+returns['AAPL'].plot(kind='hist',bins=30, density=True, figsize=(15,7))
+plt.show()
 
 returns.mean()*252
 
@@ -96,7 +96,7 @@ print(f"Expected Portfolio Volatility: {round(np.sqrt(np.dot(weights.T, np.dot(r
 pfolio_returns = []
 pfolio_volatilities = []
 
-for x in range(1000):
+for x in range(100):
     weights = np.random.random(num_assets)
     weights /= np.sum(weights)
     
@@ -128,6 +128,8 @@ returns = test.pct_change(1)*100
 
 # Calcolo il rendimento atteso e la covarianza dei rendimenti per tutte le azioni
 mean_returns = returns.mean()
+variance = returns.var()
+standard_error = np.sqrt(variance)
 cov_matrix = returns.cov()
 
 # Numero di portafogli generati casualmente
@@ -135,7 +137,7 @@ num_portfolios = 10000
 
 # Lista vuota per i risultati
 portfolio_returns = []
-portfolio_std_devs = []
+portfolio_std_errs = []
 weight = []
 
 # Genero i portafogli casuali
@@ -147,32 +149,31 @@ for i in range(num_portfolios):
     
     # Calcolo il rendimento e la deviazione standard del portafoglio
     portfolio_return = np.sum(mean_returns * weights) * 252
+    portfolio_std_err = np.sqrt((variance[0]*(weights[0]**2)) + (variance[1]*(weights[1]**2)) + 2*cov_matrix['KO'][1]*weights[0]*weights[1])
     portfolio_std_dev = np.sqrt(np.dot(weights.T, np.dot(cov_matrix, weights))) * np.sqrt(252)
     
     # Aggiungo i risultati alla lista
     weight.append(weights)
     portfolio_returns.append(portfolio_return)
-    portfolio_std_devs.append(portfolio_std_dev)
+    portfolio_std_errs.append(portfolio_std_err)
 
 # Converto le liste in un DataFrame pandas
-portfolio_data = pd.DataFrame({'Return': portfolio_returns, 'Std Dev': portfolio_std_devs, 'Weights': weight})
-portfolio_data
+portfolio_data = pd.DataFrame({'Return': portfolio_returns, 'Std Err': portfolio_std_errs, 'Weights': weight})
 
 # pesi del portafoglio ottimale con minima standard deviation
-portfolio_data.sort_values(by='Std Dev', ascending=True)[:1]['Weights']
+portfolio_data.sort_values(by='Std Err', ascending=True)[:1]['Weights']
 
 # Plotta tutte le varie combinazioni di portafogli
-min_std_dev = portfolio_data.sort_values(by='Std Dev', ascending=True)[:1]['Return']
+min_std_dev = portfolio_data.sort_values(by='Std Err', ascending=True)[:1]['Return']
 min_std_dev = float(min_std_dev)
-min_std_dev
 
 # Portafogli inefficienti
 inefficient_portfolio_data = portfolio_data[portfolio_data['Return'] < min_std_dev]
 efficient_portfolio_data = portfolio_data[portfolio_data['Return'] >= min_std_dev]
 
 plt.figure(figsize=(10, 6))
-plt.scatter(efficient_portfolio_data['Std Dev'], efficient_portfolio_data['Return'], alpha=0.3, color='blue', label='Portafogli Efficienti')
-plt.scatter(inefficient_portfolio_data['Std Dev'], inefficient_portfolio_data['Return'], alpha=0.3, color='red', label='Portafogli Inefficienti')
+plt.scatter(efficient_portfolio_data['Std Err'], efficient_portfolio_data['Return'], alpha=0.3, color='blue', label='Portafogli Efficienti')
+plt.scatter(inefficient_portfolio_data['Std Err'], inefficient_portfolio_data['Return'], alpha=0.3, color='red', label='Portafogli Inefficienti')
 plt.axhline(y=min_std_dev, color='black', linestyle='--', lw=2)
 plt.xlabel('Deviazione Standard')
 plt.ylabel('Rendimento atteso')
