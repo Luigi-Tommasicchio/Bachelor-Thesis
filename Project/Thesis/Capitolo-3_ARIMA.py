@@ -13,6 +13,17 @@ close_test = pd.read_csv('Project\\Thesis\\Train and test data\\close_test.csv',
 close_train.head()
 close_test.head()
 
+#Setto la frequenza dei giorni come business days
+close_train = close_train.asfreq('b')
+close_train.isna().sum()
+close_train = close_train.fillna(method = 'ffill')
+close_train.isna().sum()
+
+close_test = close_test.asfreq('b')
+close_test.isna().sum()
+close_test = close_test.fillna(method = 'ffill')
+close_test.isna().sum()
+
 close_train.plot(figsize=(15,7), label='Close Train', color='blue')
 close_test.Close.plot(label='Close Test', color='red')
 close_test.drift_forecast.plot(label='Drift Forecast', color='purple')
@@ -36,11 +47,11 @@ def adf_test(column):
 adf_test(close_train)
 
 # Seasonal decomposition
-s_dec_additive = seasonal_decompose(close_train, model = 'additive', period=252)
+s_dec_additive = seasonal_decompose(close_train, model = 'additive')
 s_dec_additive.plot()
 plt.show()
 
-s_dec_multiplicative = seasonal_decompose(close_train, model = 'multiplicative', period=252)
+s_dec_multiplicative = seasonal_decompose(close_train, model = 'multiplicative')
 s_dec_multiplicative.plot()
 plt.show()
 
