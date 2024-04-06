@@ -88,48 +88,30 @@ plt.title('Prezzi di chiusura AAPL', size=24, pad=15)
 plt.legend()
 plt.show()
 
+
 # Creo tre benchmark per l'analisi:
-close_test = pd.DataFrame(close_test)
+close_test = close_test.reset_index()
+close_test = pd.DataFrame({'Close':close_test.Close,
+                           'Date':close_test.Date})
+close_test = close_test.set_index('Date')
 
 # Benchmark mean
 mean_forecast = close_train.mean().repeat(252)
 close_test['mean_forecast'] = mean_forecast
 
-
 # Benchmark Naive
 naive_forecast = close_train[-1]  # Prendi l'ultimo valore del set di addestramento
 close_test['naive_forecast'] = naive_forecast
-
 
 # Benchmark Drift
 drift = (close_train[-1] - close_train[0]) / len(close_train)  # Calcola il tasso di variazione medio
 drift
 drift_forecast = []
-for i in range(0, len(close_test)):
+for i in range(len(close_test)):
     forecast = close_train[-1] + (drift * i)
     drift_forecast.append(forecast)
 
 close_test['drift_forecast'] = drift_forecast
-
-
-# OLS
-import statsmodels.api as sm
-# Define your independent variable (X) and dependent variable (y)
-X = close_train.index.to_julian_date().values.reshape(-1, 1)  # Converting date index to Julian date
-y = close_train
-
-X = sm.add_constant(X)
-model = sm.OLS(y, X).fit()
-
-print(model.summary())
-
-X_test = close_test.index.to_julian_date().values.reshape(-1, 1) 
-X_test = sm.add_constant(X_test)
-
-ols_forecast = model.predict(X_test)
-close_test['ols_forecast'] = ols_forecast
-
-
 
 # Plotto i Benchmark
 import matplotlib.patheffects as pe
@@ -138,7 +120,6 @@ close_train.plot(label='Train set', color='blue', figsize=(15,7))
 close_test.Close.plot(label='Test set', color='red')
 close_test.naive_forecast.plot(label='Naive Forecast', color='green', lw=2)
 close_test.drift_forecast.plot(label='Drift Forecast', color='purple', lw=2)
-#close_test.ols_forecast.plot(label='OLS Forecast', color='black', lw=3)
 close_test.mean_forecast.plot(label='Mean Forecast', color='gold', lw=2, path_effects=[pe.Stroke(linewidth=2.5, foreground='black'), pe.Normal()])
 plt.ylabel('Prezzo $')
 plt.xlabel('Data')
@@ -174,14 +155,9 @@ benchmarks_errors = pd.DataFrame({
 benchmarks_errors
 
 
+# Esporto il train set e test set come csv per riutilizzarli in altri file
+close_train = pd.DataFrame(close_train)
+close_train.to_csv('Project\\Thesis\\Train and test data\\close_train.csv')
 
-# Differenziare una serie e normalizzarla
-import numpy as np
-apple_diff = apple['Close'].diff()
-apple_close = apple.Close[0] + apple_diff.cumsum()
-apple_close.plot(label='Integrated')
-apple['Close'].plot(label='original',linestyle='dotted', color='r', linewidth=2)
-plt.legend()
-plt.show()
-
-
+close_test.to_csv('Project\\Thesis\\Train and test data\\close_test.csv')
+close_test
