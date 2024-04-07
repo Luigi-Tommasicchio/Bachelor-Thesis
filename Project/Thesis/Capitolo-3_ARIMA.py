@@ -155,9 +155,9 @@ steps_ahead = 5 # di quanti step vogliamo procedere ogni volta
 for i in range(int(len(close_test_1)/steps_ahead)):
     model_ar = ARIMA(close_train_obs, order=(1,0,0))
     model_ar_fit = model_ar.fit()
-    dio = model_ar_fit.forecast(steps_ahead)
-    dio = pd.Series(dio, index=dio.index, name='Close')
-    close_train_1 = close_train_1._append(dio, ignore_index=True)# da plottare, questa contiene i forecast
+    forecasts = model_ar_fit.forecast(steps_ahead)
+    foracasts = pd.Series(forecasts, index=forecasts.index, name='Close')
+    close_train_1 = close_train_1._append(forecasts, ignore_index=True)# da plottare, questa contiene i forecast
 
     close_train_obs = close_train_obs._append(pd.Series(close_test_1.iloc[start:start+steps_ahead]), ignore_index=True) # la serie su cui si fitta il modello
     start += steps_ahead
