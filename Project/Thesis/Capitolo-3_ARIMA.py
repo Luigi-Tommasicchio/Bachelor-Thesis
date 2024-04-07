@@ -118,7 +118,7 @@ adf_test(close_train)
 adf_test(close_diff)
 ############################################################################################################################
 # Adesso sulla base del PACF della serie originale, provo a fittare un modello AUTOREGRESSIVO.
-model_ar = ARIMA(close_train, order=(9,0,0))
+model_ar = ARIMA(close_train, order=(1,0,0))
 model_ar_fit = model_ar.fit()
 print(model_ar_fit.summary())
 
@@ -130,8 +130,34 @@ residuals.plot(title="Residuals", ax=ax[0]); ax[0].set_ylim(-15,15)
 residuals.plot(kind='kde', title='Density', ax=ax[1])
 plt.show()
 
-prediction = model_ar_fit.forecast(15)
-close_test[:15].plot()
+forecasts = model_ar_fit.forecast(1)
+close_test[:1].plot()
 prediction.plot()
 plt.show()
 
+type(prediction)
+
+
+
+
+
+close_test_1 = close_test['Close'].reset_index()
+close_train_1 = close_train.copy().reset_index()
+
+model_ar = ARIMA(close_train_1.Close, order=(1,0,0))
+model_ar_fit = model_ar.fit()
+forecasts = model_ar_fit.forecast(1)
+forecasts = forecasts.reset_index()
+close_train_1 = close_train_1._append(forecasts, ignore_index=True)
+
+
+close_train_1 = close_train_1.set_index('Date')
+close_train_1.plot()
+plt.show()
+
+len(close_train_1)
+len(close_test_1)
+close_test_
+plt.show()
+def arima_forecast(series):
+    sgt.acf(series)
