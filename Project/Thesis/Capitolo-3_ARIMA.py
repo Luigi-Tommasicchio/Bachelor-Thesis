@@ -91,19 +91,18 @@ plt.xlabel('Data')
 plt.legend()
 plt.show()
 ############################################################################################################################
-close_diff
-
+# Creo una figura in cui plotto la serie di train originale, quella differenziata e per ciascuna l'ACF ed il PACF
 plt.rcParams.update({'figure.figsize':(15,10)})
-
-# Original Series
 fig, axes = plt.subplots(2, 3, sharex=False)
 
-axes[0, 0].plot(close_train); axes[0, 0].set_title('Original Series'); axes[0, 0].set_xlabel('Data'); axes[0, 0].set_ylabel('Prezzo $')
+# Serie Originale
+axes[0, 0].plot(close_train); axes[0, 0].set_title('Serie Originale'); axes[0, 0].set_xlabel('Data'); axes[0, 0].set_ylabel('Prezzo $')
 axes[0, 0].tick_params(axis='x', labelrotation = 45)
 sgt.plot_acf(close_train, ax=axes[0, 1],auto_ylims=True, lags=40, zero=False)
 sgt.plot_pacf(close_train, ax=axes[0, 2],auto_ylims=True, lags=40, zero=False)
 axes[0,1].set_xlabel('Lags'); axes[0,2].set_xlabel('Lags')
-# 1st Differencing
+
+# Differenziazione di 1° ordine
 axes[1, 0].plot(close_diff); axes[1, 0].set_title('Differenziazione di 1° ordine'); axes[1, 0].set_xlabel('Data'); axes[1, 0].set_ylabel('Variazione giornaliera del prezzo (%)')
 axes[1, 0].tick_params(axis='x', labelrotation = 45)
 sgt.plot_acf(close_diff, ax=axes[1, 1],auto_ylims=True, lags=40, zero=False)
@@ -117,3 +116,22 @@ plt.show()
 
 adf_test(close_train)
 adf_test(close_diff)
+############################################################################################################################
+# Adesso sulla base del PACF della serie originale, provo a fittare un modello AUTOREGRESSIVO.
+model_ar = ARIMA(close_train, order=(9,0,0))
+model_ar_fit = model_ar.fit()
+print(model_ar_fit.summary())
+
+residuals = pd.DataFrame(model_ar_fit.resid)
+
+plt.rcParams.update({'figure.figsize':(15,7)})
+fig, ax = plt.subplots(1,2)
+residuals.plot(title="Residuals", ax=ax[0]); ax[0].set_ylim(-15,15)
+residuals.plot(kind='kde', title='Density', ax=ax[1])
+plt.show()
+
+prediction = model_ar_fit.forecast(15)
+close_test[:15].plot()
+prediction.plot()
+plt.show()
+
