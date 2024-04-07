@@ -66,3 +66,30 @@ sgt.plot_pacf(close_train, lags = 40, zero = False, method = 'ols')
 plt.title('PACF for Closing Price', size = 24)
 plt.ylim(-0.2, 1.1)
 plt.show()
+                                
+############################################################################################################################
+# Differenzio la serie storica per poi integrarla.
+close_diff = (close_train.diff(1)/close_train.shift(1))*100
+close_diff.plot()
+plt.ylabel('Variazione %')
+plt.xlabel('Data')
+plt.title('Rendimenti giornalieri percentuali (%)')
+plt.legend()
+plt.show()
+
+# Dalla differenziata torno alla serie dei prezzi.
+close_int = close_train.Close[0] + ((close_diff/100)*close_train.shift(1)).cumsum()
+close_int.Close[0] = close_train.Close[0]
+close_int; close_train
+
+# Le plotto per vedere se combaciano.
+plt.plot(close_int.index, close_int.Close, color='red', label='Serie modificata')
+plt.plot(close_int.index, close_train.Close, color='blue', linestyle=':', label='Serie originale')
+plt.title(f'Prezzi di chiusura giornalieri AAPL dal: {close_train.index.date.min()} al {close_train.index.date.max()}')
+plt.ylabel('Prezzi $')
+plt.xlabel('Data')
+plt.legend()
+plt.show()
+############################################################################################################################
+
+
