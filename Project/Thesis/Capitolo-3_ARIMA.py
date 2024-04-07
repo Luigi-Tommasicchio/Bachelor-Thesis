@@ -69,7 +69,7 @@ plt.show()
                                 
 ############################################################################################################################
 # Differenzio la serie storica per poi integrarla.
-close_diff = (close_train.diff(1)/close_train.shift(1))*100
+close_diff = ((close_train.diff()/close_train.shift(1))*100).fillna(value=0)
 close_diff.plot()
 plt.ylabel('Variazione %')
 plt.xlabel('Data')
@@ -91,5 +91,29 @@ plt.xlabel('Data')
 plt.legend()
 plt.show()
 ############################################################################################################################
+close_diff
 
+plt.rcParams.update({'figure.figsize':(15,10)})
 
+# Original Series
+fig, axes = plt.subplots(2, 3, sharex=False)
+
+axes[0, 0].plot(close_train); axes[0, 0].set_title('Original Series'); axes[0, 0].set_xlabel('Data'); axes[0, 0].set_ylabel('Prezzo $')
+axes[0, 0].tick_params(axis='x', labelrotation = 45)
+sgt.plot_acf(close_train, ax=axes[0, 1],auto_ylims=True, lags=40, zero=False)
+sgt.plot_pacf(close_train, ax=axes[0, 2],auto_ylims=True, lags=40, zero=False)
+axes[0,1].set_xlabel('Lags'); axes[0,2].set_xlabel('Lags')
+# 1st Differencing
+axes[1, 0].plot(close_diff); axes[1, 0].set_title('Differenziazione di 1° ordine'); axes[1, 0].set_xlabel('Data'); axes[1, 0].set_ylabel('Variazione giornaliera del prezzo (%)')
+axes[1, 0].tick_params(axis='x', labelrotation = 45)
+sgt.plot_acf(close_diff, ax=axes[1, 1],auto_ylims=True, lags=40, zero=False)
+sgt.plot_pacf(close_diff, ax=axes[1, 2],auto_ylims=True, lags=40, zero=False)
+axes[1,1].set_xlabel('Lags'); axes[1,2].set_xlabel('Lags')
+
+fig.suptitle('Effetto della differenziazione', fontsize=16)
+fig.tight_layout()
+fig.subplots_adjust(hspace=0.4)
+plt.show()
+
+adf_test(close_train)
+adf_test(close_diff)
