@@ -122,15 +122,9 @@ model_ar = ARIMA(close_train, order=(1,0,0))
 model_ar_fit = model_ar.fit()
 print(model_ar_fit.summary())
 
-residuals = pd.DataFrame(model_ar_fit.resid)
+residuals = model_ar_fit.resid
 
-plt.rcParams.update({'figure.figsize':(15,7)})
-fig, ax = plt.subplots(1,2)
-residuals.plot(title="Residuals", ax=ax[0]); ax[0].set_ylim(-15,15)
-residuals.plot(kind='kde', title='Density', ax=ax[1])
-plt.show()
-
-forecasts = model_ar_fit.forecast(1)
+prediction = model_ar_fit.forecast(1)
 close_test[:1].plot()
 prediction.plot()
 plt.show()
@@ -141,23 +135,35 @@ type(prediction)
 
 
 
+#prendo solo la colonna con i prezzi dal df test
 close_test_1 = close_test['Close'].reset_index()
-close_train_1 = close_train.copy().reset_index()
 
-model_ar = ARIMA(close_train_1.Close, order=(1,0,0))
-model_ar_fit = model_ar.fit()
-forecasts = model_ar_fit.forecast(1)
-forecasts = forecasts.reset_index()
-close_train_1 = close_train_1._append(forecasts, ignore_index=True)
+#questa è la serie a cui appendo i forecast
+close_train_1 = close_train.copy()
+close_train_1 = pd.Series(close_train_1.Close)
+
+# Serie su cui andiamo a fittare il modello e serie a cui appenderemo le osservazioni vere
+close_train_obs = close_train.copy().reset_index()['Close']
+type(close_train_obs)
+close_test_1 = close_test['Close']
+type(close_test_1)
 
 
-close_train_1 = close_train_1.set_index('Date')
+start = 0 # indice che mi serve per lo slice delle osservazioni da aggiungere per addestrare il modello
+steps_ahead = 5 # di quanti step vogliamo procedere ogni volta
+
+for i in range(int(len(close_test_1)/steps_ahead)):
+    model_ar = ARIMA(close_train_obs, order=(1,0,0))
+    model_ar_fit = model_ar.fit()
+    dio = model_ar_fit.forecast(steps_ahead)
+    dio = pd.Series(dio, index=dio.index, name='Close')
+    close_train_1 = close_train_1._append(dio, ignore_index=True)# da plottare, questa contiene i forecast
+
+    close_train_obs = close_train_obs._append(pd.Series(close_test_1.iloc[start:start+steps_ahead]), ignore_index=True) # la serie su cui si fitta il modello
+    start += steps_ahead
+
+print(len(close_train_1), len(close_train_obs))
+
 close_train_1.plot()
+close_train_obs.plot()
 plt.show()
-
-len(close_train_1)
-len(close_test_1)
-close_test_
-plt.show()
-def arima_forecast(series):
-    sgt.acf(series)
