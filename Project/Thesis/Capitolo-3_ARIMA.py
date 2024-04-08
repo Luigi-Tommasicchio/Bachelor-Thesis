@@ -118,23 +118,33 @@ adf_test(close_train)
 adf_test(close_diff)
 ############################################################################################################################
 # Adesso sulla base del PACF della serie originale, provo a fittare un modello AUTOREGRESSIVO.
-model_ar = ARIMA(close_train, order=(1,0,0))
-model_ar_fit = model_ar.fit()
-print(model_ar_fit.summary())
+# Model Selection in base all'MSE e AIC
+list_mse = []
+aic = []
+for p in range(1,15):
+    model_ar = ARIMA(close_train, order=(p,0,0))
+    model_ar_fit = model_ar.fit()
+    forecasts = model_ar_fit.forecast(len(close_test['Close']))
+    mean = close_test['Close'].mean()
+    mse = sum((forecasts-mean)**2)/len(close_test['Close'])
+    list_mse.append(mse)
+    aic.append(model_ar_fit.aic)
 
-residuals = model_ar_fit.resid
+fig, ax = plt.subplots(2, sharex=False)
+list_mse = pd.Series(list_mse)
+aic = pd.Series(aic)
+min_mse = list_mse.idxmin()+1
+min_aic = aic.idxmin()+1
 
-prediction = model_ar_fit.forecast(1)
-close_test[:1].plot()
-prediction.plot()
+ax[0].plot(range(1,15), list_mse, marker='o', color='blue'); ax[0].set_title('MSE'); ax[0].set_xlabel('Lags')
+ax[0].scatter(min_mse, list_mse.min(), marker='o', color='green', lw=3, zorder=3)
+ax[1].plot(range(1,15), aic, marker='o', color='blue'); ax[1].set_title('AIC'); ax[1].set_xlabel('Lags')
+ax[1].scatter(min_aic, aic.min(), marker='o', color='green', lw=3, zorder=3)
+fig.subplots_adjust(hspace=0.5)
 plt.show()
 
-type(prediction)
 
-
-
-
-
+# ARIMA FORECASTING
 #prendo solo la colonna con i prezzi dal df test
 close_test_1 = close_test['Close'].reset_index()
 
@@ -148,12 +158,11 @@ type(close_train_obs)
 close_test_1 = close_test['Close']
 type(close_test_1)
 
-
 start = 0 # indice che mi serve per lo slice delle osservazioni da aggiungere per addestrare il modello
-steps_ahead = 5 # di quanti step vogliamo procedere ogni volta
+steps_ahead = len(close_test_1) # di quanti step vogliamo procedere ogni volta
 
 for i in range(int(len(close_test_1)/steps_ahead)):
-    model_ar = ARIMA(close_train_obs, order=(1,0,0))
+    model_ar = ARIMA(close_train_obs, order=(4,0,0))
     model_ar_fit = model_ar.fit()
     forecasts = model_ar_fit.forecast(steps_ahead)
     foracasts = pd.Series(forecasts, index=forecasts.index, name='Close')
@@ -164,6 +173,12 @@ for i in range(int(len(close_test_1)/steps_ahead)):
 
 print(len(close_train_1), len(close_train_obs))
 
-close_train_1.plot()
-close_train_obs.plot()
-plt.show()
+close_train_1.plot(label='Forecasted Prices')
+close_train_obs.plot(label='Actual Prices')
+plt.title('Forecasts vs. Actual Prices')
+plt.ylabel('Prezzi $')
+plt.xlabel('Data')
+plt.legend()
+plt.show() 
+
+
