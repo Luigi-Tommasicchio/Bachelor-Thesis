@@ -77,6 +77,8 @@ plt.title('Rendimenti giornalieri percentuali (%)')
 plt.legend()
 plt.show()
 
+adf_test(close_diff)
+
 # Dalla differenziata torno alla serie dei prezzi.
 close_int = close_train.Close[0] + ((close_diff/100)*close_train.shift(1)).cumsum()
 close_int.Close[0] = close_train.Close[0]
@@ -96,18 +98,72 @@ plt.rcParams.update({'figure.figsize':(15,10)})
 fig, axes = plt.subplots(2, 3, sharex=False)
 
 # Serie Originale
-axes[0, 0].plot(close_train); axes[0, 0].set_title('Serie Originale'); axes[0, 0].set_xlabel('Data'); axes[0, 0].set_ylabel('Prezzo $')
+axes[0, 0].plot(close_train, c='blue'); axes[0, 0].set_title('Serie Originale'); axes[0, 0].set_xlabel('Data'); axes[0, 0].set_ylabel('Prezzo $')
 axes[0, 0].tick_params(axis='x', labelrotation = 45)
-sgt.plot_acf(close_train, ax=axes[0, 1],auto_ylims=True, lags=40, zero=False)
-sgt.plot_pacf(close_train, ax=axes[0, 2],auto_ylims=True, lags=40, zero=False)
-axes[0,1].set_xlabel('Lags'); axes[0,2].set_xlabel('Lags')
+
+sgt.plot_acf(close_train, ax=axes[0, 1],auto_ylims=True, lags=40, zero=False, c='blue'); axes[0,1].set_xlabel('Lags')
+acf_values, confint = sgt.acf(close_train, alpha=0.05, nlags=40)
+lower_bound = confint[0:, 0] - acf_values[0:]
+upper_bound = confint[0:, 1] - acf_values[0:]
+lags = np.arange(0, len(acf_values[0:]))
+ciao = []
+for i in range(len(acf_values[0:])):
+    if acf_values[i] > upper_bound[i]:
+        ciao.append(acf_values[i])
+    elif acf_values[i] < lower_bound[i]:
+        ciao.append(acf_values[i])
+    else:
+        ciao.append('NaN')
+axes[0,1].scatter(x=lags[1:], y=ciao[1:], zorder=3, c='orangered')
+
+sgt.plot_pacf(close_train, ax=axes[0, 2],auto_ylims=True, lags=40, zero=False, method='ols', c='blue'); axes[0,2].set_xlabel('Lags')
+pacf_values, confint = sgt.pacf(close_train, alpha=0.05, nlags=40, method='ols')
+lower_bound = confint[1:, 0] - pacf_values[1:]
+upper_bound = confint[1:, 1] - pacf_values[1:]
+lags = np.arange(0, len(pacf_values[1:]))
+ciao = []
+for i in range(len(pacf_values[1:])):
+    if pacf_values[i] > upper_bound[0]:
+        ciao.append(pacf_values[i])
+    elif pacf_values[i] < lower_bound[0]:
+        ciao.append(pacf_values[i])
+    else:
+        ciao.append('NaN')
+axes[0,2].scatter(x=lags[1:], y=ciao[1:], zorder=3, c='orangered')
 
 # Differenziazione di 1° ordine
-axes[1, 0].plot(close_diff); axes[1, 0].set_title('Differenziazione di 1° ordine'); axes[1, 0].set_xlabel('Data'); axes[1, 0].set_ylabel('Variazione giornaliera del prezzo (%)')
+axes[1, 0].plot(close_diff, c='blue'); axes[1, 0].set_title('Differenziazione di 1° ordine'); axes[1, 0].set_xlabel('Data'); axes[1, 0].set_ylabel('Variazione giornaliera del prezzo (%)')
 axes[1, 0].tick_params(axis='x', labelrotation = 45)
-sgt.plot_acf(close_diff, ax=axes[1, 1],auto_ylims=True, lags=40, zero=False)
-sgt.plot_pacf(close_diff, ax=axes[1, 2],auto_ylims=True, lags=40, zero=False)
-axes[1,1].set_xlabel('Lags'); axes[1,2].set_xlabel('Lags')
+
+sgt.plot_acf(close_diff, ax=axes[1, 1],auto_ylims=True, lags=40, zero=False, c='blue'); axes[1,1].set_xlabel('Lags')
+acf_values, confint = sgt.acf(close_diff, alpha=0.05, nlags=40)
+lower_bound = confint[1:, 0] - acf_values[1:]
+upper_bound = confint[1:, 1] - acf_values[1:]
+lags = np.arange(0, len(acf_values[1:]))
+ciao = []
+for i in range(len(acf_values[1:])):
+    if acf_values[i] > upper_bound[i]:
+        ciao.append(acf_values[i])
+    elif acf_values[i] < lower_bound[i]:
+        ciao.append(acf_values[i])
+    else:
+        ciao.append('NaN')
+axes[1,1].scatter(x=lags, y=ciao, zorder=3, c='orangered')
+
+sgt.plot_pacf(close_diff, ax=axes[1, 2],auto_ylims=True, lags=40, zero=False, method='ols', c='blue'); axes[1,2].set_xlabel('Lags')
+pacf_values, confint = sgt.pacf(close_diff, alpha=0.05, nlags=40, method='ols')
+lower_bound = confint[1:, 0] - pacf_values[1:]
+upper_bound = confint[1:, 1] - pacf_values[1:]
+lags = np.arange(0, len(pacf_values[1:]))
+ciao = []
+for i in range(len(pacf_values[1:])):
+    if pacf_values[i] > upper_bound[0]:
+        ciao.append(pacf_values[i])
+    elif pacf_values[i] < lower_bound[0]:
+        ciao.append(pacf_values[i])
+    else:
+        ciao.append('NaN')
+axes[1,2].scatter(x=lags, y=ciao, zorder=3, c='orangered')
 
 fig.suptitle('Effetto della differenziazione', fontsize=16)
 fig.tight_layout()
@@ -116,6 +172,7 @@ plt.show()
 
 adf_test(close_train)
 adf_test(close_diff)
+
 ############################################################################################################################
 # Adesso sulla base del PACF della serie originale, provo a fittare un modello AUTOREGRESSIVO.
 # Model Selection in base all'MSE e AIC
