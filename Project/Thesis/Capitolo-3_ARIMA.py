@@ -3,7 +3,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import statsmodels.tsa.stattools as sts #per l'.adfuller()
 from statsmodels.tsa.seasonal import seasonal_decompose
-import statsmodels.graphics.tsaplots as sgt
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from statsmodels.tsa.stattools import acf, pacf
 from scipy.stats.distributions import chi2
 from statsmodels.tsa.arima.model import ARIMA 
 
@@ -56,13 +57,13 @@ s_dec_multiplicative.plot()
 plt.show()
 
 # ACF PLOT
-sgt.plot_acf(close_train, lags = 40, zero = False)
+plot_acf(close_train, lags = 40, zero = False)
 plt.title('ACF for Closing Price', size = 24)
 plt.ylim(-1, 1.1)
 plt.show()
 
 # PACF PLOT
-sgt.plot_pacf(close_train, lags = 40, zero = False, method = 'ols')
+plot_pacf(close_train, lags = 40, zero = False, method = 'ols')
 plt.title('PACF for Closing Price', size = 24)
 plt.ylim(-0.2, 1.1)
 plt.show()
@@ -101,8 +102,8 @@ fig, axes = plt.subplots(2, 3, sharex=False)
 axes[0, 0].plot(close_train, c='blue'); axes[0, 0].set_title('Serie Originale'); axes[0, 0].set_xlabel('Data'); axes[0, 0].set_ylabel('Prezzo $')
 axes[0, 0].tick_params(axis='x', labelrotation = 45)
 
-sgt.plot_acf(close_train, ax=axes[0, 1],auto_ylims=True, lags=40, zero=False, c='blue'); axes[0,1].set_xlabel('Lags')
-acf_values, confint = sgt.acf(close_train, alpha=0.05, nlags=40)
+plot_acf(close_train, ax=axes[0, 1],auto_ylims=True, lags=40, zero=False, c='blue'); axes[0,1].set_xlabel('Lags')
+acf_values, confint = acf(close_train, alpha=0.05, nlags=40)
 lower_bound = confint[0:, 0] - acf_values[0:]
 upper_bound = confint[0:, 1] - acf_values[0:]
 lags = np.arange(0, len(acf_values[0:]))
@@ -116,8 +117,8 @@ for i in range(len(acf_values[0:])):
         ciao.append('NaN')
 axes[0,1].scatter(x=lags[1:], y=ciao[1:], zorder=3, c='orangered')
 
-sgt.plot_pacf(close_train, ax=axes[0, 2],auto_ylims=True, lags=40, zero=False, method='ols', c='blue'); axes[0,2].set_xlabel('Lags')
-pacf_values, confint = sgt.pacf(close_train, alpha=0.05, nlags=40, method='ols')
+plot_pacf(close_train, ax=axes[0, 2],auto_ylims=True, lags=40, zero=False, method='ols', c='blue'); axes[0,2].set_xlabel('Lags')
+pacf_values, confint = pacf(close_train, alpha=0.05, nlags=40, method='ols')
 lower_bound = confint[1:, 0] - pacf_values[1:]
 upper_bound = confint[1:, 1] - pacf_values[1:]
 lags = np.arange(0, len(pacf_values[1:]))
@@ -135,8 +136,8 @@ axes[0,2].scatter(x=lags[1:], y=ciao[1:], zorder=3, c='orangered')
 axes[1, 0].plot(close_diff, c='blue'); axes[1, 0].set_title('Differenziazione di 1° ordine'); axes[1, 0].set_xlabel('Data'); axes[1, 0].set_ylabel('Variazione giornaliera del prezzo (%)')
 axes[1, 0].tick_params(axis='x', labelrotation = 45)
 
-sgt.plot_acf(close_diff, ax=axes[1, 1],auto_ylims=True, lags=40, zero=False, c='blue'); axes[1,1].set_xlabel('Lags')
-acf_values, confint = sgt.acf(close_diff, alpha=0.05, nlags=40)
+plot_acf(close_diff, ax=axes[1, 1],auto_ylims=True, lags=40, zero=False, c='blue'); axes[1,1].set_xlabel('Lags')
+acf_values, confint = acf(close_diff, alpha=0.05, nlags=40)
 lower_bound = confint[1:, 0] - acf_values[1:]
 upper_bound = confint[1:, 1] - acf_values[1:]
 lags = np.arange(0, len(acf_values[1:]))
@@ -150,8 +151,8 @@ for i in range(len(acf_values[1:])):
         ciao.append('NaN')
 axes[1,1].scatter(x=lags, y=ciao, zorder=3, c='orangered')
 
-sgt.plot_pacf(close_diff, ax=axes[1, 2],auto_ylims=True, lags=40, zero=False, method='ols', c='blue'); axes[1,2].set_xlabel('Lags')
-pacf_values, confint = sgt.pacf(close_diff, alpha=0.05, nlags=40, method='ols')
+plot_pacf(close_diff, ax=axes[1, 2],auto_ylims=True, lags=40, zero=False, method='ols', c='blue'); axes[1,2].set_xlabel('Lags')
+pacf_values, confint = pacf(close_diff, alpha=0.05, nlags=40, method='ols')
 lower_bound = confint[1:, 0] - pacf_values[1:]
 upper_bound = confint[1:, 1] - pacf_values[1:]
 lags = np.arange(0, len(pacf_values[1:]))
@@ -216,10 +217,10 @@ close_test_1 = close_test['Close']
 type(close_test_1)
 
 start = 0 # indice che mi serve per lo slice delle osservazioni da aggiungere per addestrare il modello
-steps_ahead = len(close_test_1) # di quanti step vogliamo procedere ogni volta
+steps_ahead = 10 # di quanti step vogliamo procedere ogni volta
 
 for i in range(int(len(close_test_1)/steps_ahead)):
-    model_ar = ARIMA(close_train_obs, order=(4,0,0))
+    model_ar = ARIMA(close_train_obs, order=(10,0,0))
     model_ar_fit = model_ar.fit()
     forecasts = model_ar_fit.forecast(steps_ahead)
     foracasts = pd.Series(forecasts, index=forecasts.index, name='Close')
@@ -230,12 +231,72 @@ for i in range(int(len(close_test_1)/steps_ahead)):
 
 print(len(close_train_1), len(close_train_obs))
 
-close_train_1.plot(label='Forecasted Prices')
-close_train_obs.plot(label='Actual Prices')
+fig, ax = plt.subplots(2,1, figsize=(15,7))
+close_train_1.plot(label='Forecasted Prices', c='orangered', ax=ax[0]); ax[0].set_ylabel('Prezzi $')
+close_train_obs.plot(label='Actual Prices', c='blue', ax=ax[0])
 plt.title('Forecasts vs. Actual Prices')
 plt.ylabel('Prezzi $')
 plt.xlabel('Data')
+fig.subplots_adjust(hspace=0.5)
 plt.legend()
 plt.show() 
 
+########################################################################################################################################
 
+# Iniziamo con la parte di ARIMA
+
+# la serie di train è close_train, mentre quella di test è close_test['Close']
+# prima di tutto parliamo di seasonal decomposition, poi magari famo un adf, poi siccome non è un cazzo stazionario
+# magari famo una differenziarione, e devo vedè se riesco a farlo con il seasonal decompose a leva sto cazzo de tren per poi rimetterlo?
+
+# 1) Decomposizione della serie storica:
+decomposition = seasonal_decompose(close_train, model='additive') # Di default setta un periodo stazionale pari a 5 giorni ovvero una settimana di trading
+decomposition.plot()                                              # restituisce un oggetto con vari attributi tipo trend, stagionalità e residui.
+plt.show()                                                        # da qui praticamente capiamo che non esiste un effetto seasonal, ma che esiste solamente 
+                                                                  # una componente di trend che possiamo rimuovere
+
+# 2) adf per la serie storica:
+adf_test(close_train)                                             # output ci dice che la serie non è stazionaria come ci aspettavamo
+
+# 3) ACF e PACF per la serie non stazionaria: 
+plt.rcParams.update({'figure.figsize':(17, 17/3)})
+fig, axes = plt.subplots(1, 3, sharex=False)
+
+# Serie Originale
+axes[0].plot(close_train, c='blue'); axes[0].set_title('Serie Originale'); axes[0].set_xlabel('Data'); axes[0].set_ylabel('Prezzo $')
+axes[0].tick_params(axis='x', labelrotation = 45)
+
+plot_acf(close_train, ax=axes[1],auto_ylims=True, lags=40, zero=False, c='blue'); axes[1].set_xlabel('Lags')
+acf_values, confint = acf(close_train, alpha=0.05, nlags=40)
+lower_bound = confint[0:, 0] - acf_values[0:]
+upper_bound = confint[0:, 1] - acf_values[0:]
+lags = np.arange(0, len(acf_values[0:]))
+ciao = []
+for i in range(len(acf_values[0:])):
+    if acf_values[i] > upper_bound[i]:
+        ciao.append(acf_values[i])
+    elif acf_values[i] < lower_bound[i]:
+        ciao.append(acf_values[i])
+    else:
+        ciao.append('NaN')
+axes[1].scatter(x=lags[1:], y=ciao[1:], zorder=3, c='red')
+
+plot_pacf(close_train, ax=axes[2],auto_ylims=True, lags=40, zero=False, method='ols', c='blue'); axes[2].set_xlabel('Lags')
+pacf_values, confint = pacf(close_train, alpha=0.05, nlags=40, method='ols')
+lower_bound = confint[1:, 0] - pacf_values[1:]
+upper_bound = confint[1:, 1] - pacf_values[1:]
+lags = np.arange(0, len(pacf_values[1:]))
+ciao = []
+for i in range(len(pacf_values[1:])):
+    if pacf_values[i] > upper_bound[0]:
+        ciao.append(pacf_values[i])
+    elif pacf_values[i] < lower_bound[0]:
+        ciao.append(pacf_values[i])
+    else:
+        ciao.append('NaN')
+axes[2].scatter(x=lags[1:], y=ciao[1:], zorder=3, c='red')
+
+fig.suptitle('Serie non stazionaria', fontsize=16)
+fig.tight_layout()
+fig.subplots_adjust(hspace=0.4)
+plt.show()
