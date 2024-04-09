@@ -266,8 +266,29 @@ results_ar.plot_diagnostics(fig=fig,lags=30)
 plt.subplots_adjust(hspace=0.5)
 plt.show()
 
+time_series = close_train['Close']
 
-# questo è il modello autoregfressivo ma prima di fare cio magari fai il pacf per la serie eccc, fai lil cazzo di modello, poi prevedi e si procede con l'ma????
+mean = np.mean(time_series)
+variance = np.var(time_series)
+
+def autocovariance(series, lag):
+    n = len(series)
+    mean = np.mean(series)
+    autocov = 0
+    for i in range(n - lag):
+        autocov += (series[i] - mean) * (series[i + lag] - mean)
+    return autocov / (n)  
+
+lags = range(len(time_series))
+autocovariances = [autocovariance(time_series, lag) for lag in lags]
+
+autocorrelation_coefficients = np.array(autocovariances) / variance
+
+acf(close_train)
+autocorrelation_coefficients[:10]
+
+
+# questo è il modello autoregressivo ma prima di fare cio magari fai il pacf per la serie eccc, fai lil cazzo di modello, poi prevedi e si procede con l'ma????
 
 # 1) Decomposizione della serie storica:
 decomposition = seasonal_decompose(close_train, model='additive', period=20) # Di default setta un periodo stazionale pari a 5 giorni ovvero una settimana di trading
@@ -279,6 +300,8 @@ decomp_plot = decomp.fit()
 decomp_config = decomp.config
 decomp_plot.plot()
 plt.show()
+
+
 
 # 2) adf per la serie storica:
 adf_test(close_train)                                             # output ci dice che la serie non è stazionaria come ci aspettavamo
