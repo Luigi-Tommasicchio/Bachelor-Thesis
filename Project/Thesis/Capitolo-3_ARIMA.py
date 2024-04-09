@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
 import statsmodels.tsa.stattools as sts #per l'.adfuller()
-from statsmodels.tsa.seasonal import seasonal_decompose
+from statsmodels.tsa.seasonal import seasonal_decompose, STL, MSTL
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from statsmodels.tsa.stattools import acf, pacf
 from scipy.stats.distributions import chi2
@@ -248,12 +248,37 @@ plt.show()
 # la serie di train è close_train, mentre quella di test è close_test['Close']
 # prima di tutto parliamo di seasonal decomposition, poi magari famo un adf, poi siccome non è un cazzo stazionario
 # magari famo una differenziarione, e devo vedè se riesco a farlo con il seasonal decompose a leva sto cazzo de tren per poi rimetterlo?
+# 0) AUTOREGRESSIVO
+from statsmodels.tsa.api import acf, graphics, pacf
+from statsmodels.tsa.ar_model import AutoReg, ar_select_order
+
+model_ar = ar_select_order(close_train, 15, ic="aic", trend='t', seasonal=True, missing="drop")
+results_ar = model_ar.model.fit()
+print(results_ar.summary())
+
+results_ar.plot_predict(0,len(close_train)+len(close_test))
+close_test['drift_forecast'].plot(c='purple')
+plt.legend()
+plt.show()
+
+fig = plt.figure(figsize=(20, 9), layout=None)
+results_ar.plot_diagnostics(fig=fig,lags=30)
+plt.subplots_adjust(hspace=0.5)
+plt.show()
+
+
+# questo è il modello autoregfressivo ma prima di fare cio magari fai il pacf per la serie eccc, fai lil cazzo di modello, poi prevedi e si procede con l'ma????
 
 # 1) Decomposizione della serie storica:
-decomposition = seasonal_decompose(close_train, model='additive') # Di default setta un periodo stazionale pari a 5 giorni ovvero una settimana di trading
+decomposition = seasonal_decompose(close_train, model='additive', period=20) # Di default setta un periodo stazionale pari a 5 giorni ovvero una settimana di trading
 decomposition.plot()                                              # restituisce un oggetto con vari attributi tipo trend, stagionalità e residui.
 plt.show()                                                        # da qui praticamente capiamo che non esiste un effetto seasonal, ma che esiste solamente 
                                                                   # una componente di trend che possiamo rimuovere
+decomp = MSTL(close_train, periods=(5,20,260))
+decomp_plot = decomp.fit()
+decomp_config = decomp.config
+decomp_plot.plot()
+plt.show()
 
 # 2) adf per la serie storica:
 adf_test(close_train)                                             # output ci dice che la serie non è stazionaria come ci aspettavamo
