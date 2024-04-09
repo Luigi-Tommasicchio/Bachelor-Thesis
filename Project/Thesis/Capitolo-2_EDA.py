@@ -70,6 +70,16 @@ split = int(len(close)*0.8)
 close_train = close[:split]
 close_test = close[split:]
 
+close_train = close_train.asfreq('b')
+close_train.isna().sum()
+close_train = close_train.fillna(method = 'ffill')
+close_train.isna().sum()
+
+close_test = close_test.asfreq('b')
+close_test.isna().sum()
+close_test = close_test.fillna(method = 'ffill')
+close_test.isna().sum()
+
 close_train.tail(2)
 close_test.head(2)
 
@@ -96,7 +106,7 @@ close_test = pd.DataFrame({'Close':close_test.Close,
 close_test = close_test.set_index('Date')
 
 # Benchmark mean
-mean_forecast = close_train.mean().repeat(252)
+mean_forecast = close_train.mean().repeat(len(close_test))
 close_test['mean_forecast'] = mean_forecast
 
 # Benchmark Naive
