@@ -280,10 +280,22 @@ adf_test(close_train)
 # 2) Decomposizione della serie per renderla stazionaria, rimuoviamo il trend e facciamo quindi adf e acf plot
 decomposition = seasonal_decompose(close_train, model='additive') # Di default setta un periodo stazionale pari a 5 giorni ovvero una settimana di trading
 decomposition.plot()                                              # restituisce un oggetto con vari attributi tipo trend, stagionalità e residui.
-plt.show()                                                        # da qui praticamente capiamo che non esiste un effetto seasonal, ma che esiste solamente 
-                                                                  # una componente di trend che possiamo rimuovere
-trend = decomposition.trend                                                               
-close_train_nt = close_train.Close - trend
+plt.show()  
+
+decomposition_test = seasonal_decompose(close_test['Close'], model='additive') # Di default setta un periodo stazionale pari a 5 giorni ovvero una settimana di trading
+test_trend = decomposition_test.trend  
+test_res = decomposition_test.resid
+close_test_nores = close_test.Close - test_res
+close_test_nores.isna().sum()
+close_test_nores = close_test_nores.ffill().bfill()
+
+close_test_nt = close_test.Close - test_trend  
+close_test_nt.plot()
+close_test_nt.isna().sum()
+close_test_nt = close_test_nt.ffill().bfill()
+
+train_trend = decomposition.trend                                                               
+close_train_nt = close_train.Close - train_trend
 close_train_nt.plot()
 close_train_nt.isna().sum()
 close_train_nt = close_train_nt.ffill().bfill()
@@ -312,3 +324,57 @@ plt.xlabel('Lags')
 plt.show()                                                  # Magari si potrebbe fare il grafico figo con 4/6 sublplots con serie, acf e pacf per flexare.
 
 # 4) Modello ar base base:
+model_ar = ARIMA(close_train_nt, order=(9,0,0)).fit()
+model_ar.summary()
+prediction_ar = model_ar.forecast(len(close_test))
+price_prediction_ar = prediction_ar.cumsum()+ close_train.Close[-1]
+plt.plot(prediction_ar[2:], c='r', zorder=3)
+plt.plot(decomposition_test.resid[2:], c='b')
+#plt.plot(close_train, c='b')
+plt.show()
+
+
+close_train_1 = close_train_nt.copy()
+forecast = []
+forecast_2 = []
+forecast_5 = []
+start = 0 # indice che mi serve per lo slice delle osservazioni da aggiungere per addestrare il modello
+steps_ahead = len(close_test) # di quanti step vogliamo procedere ogni volta
+
+for i in range(int(len(close_test.Close)/steps_ahead)):
+    model_ar = ARIMA(close_train_1, order=(9,0,0))
+    model_ar_fit = model_ar.fit()
+    forecasts = model_ar_fit.forecast(steps_ahead)
+    forecast.extend(forecasts)
+
+    model_ar = ARIMA(close_train_1, order=(2,0,0))
+    model_ar_fit = model_ar.fit()
+    forecasts = model_ar_fit.forecast(steps_ahead)
+    forecast_2.extend(forecasts)
+
+    model_ar = ARIMA(close_train_1, order=(5,0,0))
+    model_ar_fit = model_ar.fit()
+    forecasts = model_ar_fit.forecast(steps_ahead)
+    forecast_5.extend(forecasts)
+
+    close_train_1 = close_train_1._append(pd.Series(close_test_nt.iloc[start:start+steps_ahead]), ignore_index=True) # la serie su cui si fitta il modello
+    start += steps_ahead
+
+print(len(forecast), len(close_test_nt), len(close_train_nt), len(close_train_1))
+
+forecast_summed = pd.Series(forecast, index=close_test.index[:260]).cumsum() + close_test_nores
+forecast_summed_2 = pd.Series(forecast_2, index=close_test.index[:260]).cumsum() + close_test_nores
+forecast_summed_5 = pd.Series(forecast_5, index=close_test.index[:260]).cumsum() + close_test_nores
+
+
+close_train.Close.plot(label='Actual Prices - Train', c ='blue')
+close_test.Close.plot(label='Actual Prices - Test',c ='b')
+forecast_summed.plot(label='forecasted prices', c='r')
+forecast_summed_2.plot(label='forecasted prices', c='green')
+forecast_summed_5.plot(label='forecasted prices', c='gold')
+plt.title('Forecasts vs. Actual Prices')
+plt.ylabel('Prezzi $')
+plt.xlabel('Data')
+fig.subplots_adjust(hspace=0.5)
+plt.legend()
+plt.show() 
