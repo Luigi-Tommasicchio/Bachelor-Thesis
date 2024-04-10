@@ -244,83 +244,20 @@ plt.show()
 ########################################################################################################################################
 
 # Iniziamo con la parte di ARIMA
-
 # la serie di train è close_train, mentre quella di test è close_test['Close']
 # prima di tutto parliamo di seasonal decomposition, poi magari famo un adf, poi siccome non è un cazzo stazionario
 # magari famo una differenziarione, e devo vedè se riesco a farlo con il seasonal decompose a leva sto cazzo de tren per poi rimetterlo?
-# 1) Semplice modello AUTOREGRESSIVO
-from statsmodels.tsa.api import acf, graphics, pacf
-from statsmodels.tsa.ar_model import AutoReg, ar_select_order
-
-model_ar = ar_select_order(close_train, 15, ic="aic", trend='t', seasonal=True, period=5, missing="drop") # selezione l'ordine migliore in base all'AIC
-results_ar = model_ar.model.fit()                                                               
-print(results_ar.summary())
-
-results_ar.plot_predict(0,len(close_train)+len(close_test)) # fa le previsioni indicando il punto di partenza e di fine
-close_test['drift_forecast'].plot(c='purple')
-close_test['Close'].plot(c='red')
-plt.legend()
-plt.show()
-
-fig = plt.figure(figsize=(20, 9), layout=None) # plotta i residui del modello
-results_ar.plot_diagnostics(fig=fig,lags=30)
-plt.subplots_adjust(hspace=0.5)
-plt.show()
-
-# 2) MODELLO EXPONENTIAL SMOOTHING
-from statsmodels.tsa.api import ExponentialSmoothing, SimpleExpSmoothing, Holt
-
-# 2.1) simple exponential smoothing
-fit1 = SimpleExpSmoothing(close_train, initialization_method="heuristic").fit(smoothing_level=0.2, optimized=False)
-fcast1 = fit1.forecast(len(close_test)).rename(r"$\alpha=0.2$")
-
-fit2 = SimpleExpSmoothing(close_train, initialization_method="heuristic").fit(smoothing_level=0.6, optimized=False)
-fcast2 = fit2.forecast(len(close_test)).rename(r"$\alpha=0.6$")
-
-fit3 = SimpleExpSmoothing(close_train, initialization_method="estimated").fit()
-fcast3 = fit3.forecast(len(close_test)).rename(r"$\alpha=%s$" % fit3.model.params["smoothing_level"])
-
-plt.figure(figsize=(12, 8))
-plt.plot(close_train, color="black")
-#plt.plot(fit1.fittedvalues, color="blue")
-(line1,) = plt.plot(fcast1, color="blue")
-#plt.plot(fit2.fittedvalues, color="red")
-(line2,) = plt.plot(fcast2, color="red")
-#plt.plot(fit3.fittedvalues, color="green")
-(line3,) = plt.plot(fcast3, color="green")
-close_test['drift_forecast'].plot(c='purple')
-close_test['Close'].plot(c='red')
-plt.legend([line1, line2, line3], [fcast1.name, fcast2.name, fcast3.name])
-plt.show()
-
-# 2.2) holt's exponential smoothing
-
-
-# 1) Decomposizione della serie storica:
-decomposition = seasonal_decompose(close_train, model='additive', period=20) # Di default setta un periodo stazionale pari a 5 giorni ovvero una settimana di trading
-decomposition.plot()                                              # restituisce un oggetto con vari attributi tipo trend, stagionalità e residui.
-plt.show()                                                        # da qui praticamente capiamo che non esiste un effetto seasonal, ma che esiste solamente 
-                                                                  # una componente di trend che possiamo rimuovere
-decomp = MSTL(close_train, periods=(5,20,260))
-decomp_plot = decomp.fit()
-decomp_config = decomp.config
-decomp_plot.plot()
-plt.show()
+# [X] 1) parliamo dei modelli ARIMA, quindi introduco il concetto di autocorrelazione su cui si basano e parlo del plot acf,
+# [X] 2) faccio il plot acf, perlo della non stazionarietà della serie storica, quindi faccio il seasonal decompose e rimuovo il trend.
+# [X] 3) rimosso il trend faccio il test di stazionarietà e vedo che la serie è stazionaria e rifaccio il acf plot per mostrare la differenza.
+# [ ] 4) parto nuovamenteo con l'acf e pacf e parlo dei modelli ar e ma, poi arma e via. 
+# [ ] 6) il modello è fittato quindi sui residui
+# [ ] 5) discutere dell'orizzonte temporale preso per il forecast e mostrare come con degli one step ahead forecast sono più precisi?
 
 
 
-# 2) adf per la serie storica:
-adf_test(close_train)                                             # output ci dice che la serie non è stazionaria come ci aspettavamo
-
-# 3) ACF e PACF per la serie non stazionaria: 
-plt.rcParams.update({'figure.figsize':(17, 17/3)})
-fig, axes = plt.subplots(1, 3, sharex=False)
-
-# Serie Originale
-axes[0].plot(close_train, c='blue'); axes[0].set_title('Serie Originale'); axes[0].set_xlabel('Data'); axes[0].set_ylabel('Prezzo $')
-axes[0].tick_params(axis='x', labelrotation = 45)
-
-plot_acf(close_train, ax=axes[1],auto_ylims=True, lags=40, zero=False, c='blue'); axes[1].set_xlabel('Lags')
+# 1) ACF della serie non stazionaria e adf test:
+plot_acf(close_train,auto_ylims=True, lags=40, zero=False, c='blue')
 acf_values, confint = acf(close_train, alpha=0.05, nlags=40)
 lower_bound = confint[0:, 0] - acf_values[0:]
 upper_bound = confint[0:, 1] - acf_values[0:]
@@ -333,24 +270,45 @@ for i in range(len(acf_values[0:])):
         ciao.append(acf_values[i])
     else:
         ciao.append('NaN')
-axes[1].scatter(x=lags[1:], y=ciao[1:], zorder=3, c='red')
+plt.scatter(x=lags[1:], y=ciao[1:], zorder=3, c='orangered')
+plt.ylabel('Autocorrelation Coefficient')
+plt.xlabel('Lags')
+plt.show() 
 
-plot_pacf(close_train, ax=axes[2],auto_ylims=True, lags=40, zero=False, method='ols', c='blue'); axes[2].set_xlabel('Lags')
-pacf_values, confint = pacf(close_train, alpha=0.05, nlags=40, method='ols')
-lower_bound = confint[1:, 0] - pacf_values[1:]
-upper_bound = confint[1:, 1] - pacf_values[1:]
-lags = np.arange(0, len(pacf_values[1:]))
-ciao = []
-for i in range(len(pacf_values[1:])):
-    if pacf_values[i] > upper_bound[0]:
-        ciao.append(pacf_values[i])
-    elif pacf_values[i] < lower_bound[0]:
-        ciao.append(pacf_values[i])
-    else:
-        ciao.append('NaN')
-axes[2].scatter(x=lags[1:], y=ciao[1:], zorder=3, c='red')
+adf_test(close_train)
 
-fig.suptitle('Serie non stazionaria', fontsize=16)
-fig.tight_layout()
-fig.subplots_adjust(hspace=0.4)
+# 2) Decomposizione della serie per renderla stazionaria, rimuoviamo il trend e facciamo quindi adf e acf plot
+decomposition = seasonal_decompose(close_train, model='additive') # Di default setta un periodo stazionale pari a 5 giorni ovvero una settimana di trading
+decomposition.plot()                                              # restituisce un oggetto con vari attributi tipo trend, stagionalità e residui.
+plt.show()                                                        # da qui praticamente capiamo che non esiste un effetto seasonal, ma che esiste solamente 
+                                                                  # una componente di trend che possiamo rimuovere
+trend = decomposition.trend                                                               
+close_train_nt = close_train.Close - trend
+close_train_nt.plot()
+close_train_nt.isna().sum()
+close_train_nt = close_train_nt.ffill().bfill()
 plt.show()
+
+adf_test(close_train_nt) 
+
+plot_acf(close_train_nt,auto_ylims=True, lags=40, zero=True, c='blue')
+acf_values, confint = acf(close_train_nt, alpha=0.05, nlags=40)
+lower_bound = confint[0:, 0] - acf_values[0:]
+upper_bound = confint[0:, 1] - acf_values[0:]
+lags = []
+ciao = []
+for i in range(len(acf_values[0:])):
+    if acf_values[i] > upper_bound[i]:
+        ciao.append(acf_values[i])
+        lags.append(i)
+    elif acf_values[i] < lower_bound[i]:
+        ciao.append(acf_values[i])
+        lags.append(i)
+    else:
+        None
+plt.scatter(lags, ciao, zorder=3, c='orangered')
+plt.ylabel('Autocorrelation Coefficient')
+plt.xlabel('Lags')
+plt.show()                                                  # Magari si potrebbe fare il grafico figo con 4/6 sublplots con serie, acf e pacf per flexare.
+
+# 4) Modello ar base base:
