@@ -195,9 +195,9 @@ min_mse = list_mse.idxmin()+1
 min_aic = aic.idxmin()+1
 
 ax[0].plot(range(1,15), list_mse, marker='o', color='blue'); ax[0].set_title('MSE'); ax[0].set_xlabel('Lags')
-ax[0].scatter(min_mse, list_mse.min(), marker='o', color='green', lw=3, zorder=3)
+ax[0].scatter(min_mse, list_mse.min(), marker='o', color='red', lw=3, zorder=3)
 ax[1].plot(range(1,15), aic, marker='o', color='blue'); ax[1].set_title('AIC'); ax[1].set_xlabel('Lags')
-ax[1].scatter(min_aic, aic.min(), marker='o', color='green', lw=3, zorder=3)
+ax[1].scatter(min_aic, aic.min(), marker='o', color='red', lw=3, zorder=3)
 fig.subplots_adjust(hspace=0.5)
 plt.show()
 
@@ -248,47 +248,53 @@ plt.show()
 # la serie di train è close_train, mentre quella di test è close_test['Close']
 # prima di tutto parliamo di seasonal decomposition, poi magari famo un adf, poi siccome non è un cazzo stazionario
 # magari famo una differenziarione, e devo vedè se riesco a farlo con il seasonal decompose a leva sto cazzo de tren per poi rimetterlo?
-# 0) AUTOREGRESSIVO
+# 1) Semplice modello AUTOREGRESSIVO
 from statsmodels.tsa.api import acf, graphics, pacf
 from statsmodels.tsa.ar_model import AutoReg, ar_select_order
 
-model_ar = ar_select_order(close_train, 15, ic="aic", trend='t', seasonal=True, missing="drop")
-results_ar = model_ar.model.fit()
+model_ar = ar_select_order(close_train, 15, ic="aic", trend='t', seasonal=True, period=5, missing="drop") # selezione l'ordine migliore in base all'AIC
+results_ar = model_ar.model.fit()                                                               
 print(results_ar.summary())
 
-results_ar.plot_predict(0,len(close_train)+len(close_test))
+results_ar.plot_predict(0,len(close_train)+len(close_test)) # fa le previsioni indicando il punto di partenza e di fine
 close_test['drift_forecast'].plot(c='purple')
+close_test['Close'].plot(c='red')
 plt.legend()
 plt.show()
 
-fig = plt.figure(figsize=(20, 9), layout=None)
+fig = plt.figure(figsize=(20, 9), layout=None) # plotta i residui del modello
 results_ar.plot_diagnostics(fig=fig,lags=30)
 plt.subplots_adjust(hspace=0.5)
 plt.show()
 
-time_series = close_train['Close']
+# 2) MODELLO EXPONENTIAL SMOOTHING
+from statsmodels.tsa.api import ExponentialSmoothing, SimpleExpSmoothing, Holt
 
-mean = np.mean(time_series)
-variance = np.var(time_series)
+# 2.1) simple exponential smoothing
+fit1 = SimpleExpSmoothing(close_train, initialization_method="heuristic").fit(smoothing_level=0.2, optimized=False)
+fcast1 = fit1.forecast(len(close_test)).rename(r"$\alpha=0.2$")
 
-def autocovariance(series, lag):
-    n = len(series)
-    mean = np.mean(series)
-    autocov = 0
-    for i in range(n - lag):
-        autocov += (series[i] - mean) * (series[i + lag] - mean)
-    return autocov / (n)  
+fit2 = SimpleExpSmoothing(close_train, initialization_method="heuristic").fit(smoothing_level=0.6, optimized=False)
+fcast2 = fit2.forecast(len(close_test)).rename(r"$\alpha=0.6$")
 
-lags = range(len(time_series))
-autocovariances = [autocovariance(time_series, lag) for lag in lags]
+fit3 = SimpleExpSmoothing(close_train, initialization_method="estimated").fit()
+fcast3 = fit3.forecast(len(close_test)).rename(r"$\alpha=%s$" % fit3.model.params["smoothing_level"])
 
-autocorrelation_coefficients = np.array(autocovariances) / variance
+plt.figure(figsize=(12, 8))
+plt.plot(close_train, color="black")
+#plt.plot(fit1.fittedvalues, color="blue")
+(line1,) = plt.plot(fcast1, color="blue")
+#plt.plot(fit2.fittedvalues, color="red")
+(line2,) = plt.plot(fcast2, color="red")
+#plt.plot(fit3.fittedvalues, color="green")
+(line3,) = plt.plot(fcast3, color="green")
+close_test['drift_forecast'].plot(c='purple')
+close_test['Close'].plot(c='red')
+plt.legend([line1, line2, line3], [fcast1.name, fcast2.name, fcast3.name])
+plt.show()
 
-acf(close_train)
-autocorrelation_coefficients[:10]
+# 2.2) holt's exponential smoothing
 
-
-# questo è il modello autoregressivo ma prima di fare cio magari fai il pacf per la serie eccc, fai lil cazzo di modello, poi prevedi e si procede con l'ma????
 
 # 1) Decomposizione della serie storica:
 decomposition = seasonal_decompose(close_train, model='additive', period=20) # Di default setta un periodo stazionale pari a 5 giorni ovvero una settimana di trading
