@@ -14,7 +14,7 @@ from selenium.webdriver.support import expected_conditions as EC
 def scrape_sp500_tickers():
     tickers = []
 
-    chrome_driver_path = 'chrome_drivers/chromedriver'  
+    chrome_driver_path = 'chrome_drivers\\chromedriver_windows.exe'  
     chrome_options = Options()
     chrome_options.add_argument('--headless')  
 
@@ -133,7 +133,7 @@ standard_error = np.sqrt(variance)
 cov_matrix = returns.cov()
 
 # Numero di portafogli generati casualmente
-num_portfolios = 10
+num_portfolios = 1000
 
 # Lista vuota per i risultati
 portfolio_returns = []
@@ -172,7 +172,7 @@ efficient_portfolio_data = portfolio_data[portfolio_data['Return'] > min_std_dev
 P_portfolio_data = portfolio_data[portfolio_data['Return'] == min_std_dev]
 
 
-plt.figure(figsize=(10, 6))
+
 plt.scatter(efficient_portfolio_data['Std Dev'], efficient_portfolio_data['Return'], alpha=1, color='blue', label='Portafogli Efficienti')
 plt.scatter(inefficient_portfolio_data['Std Dev'], inefficient_portfolio_data['Return'], alpha=1, color='red', label='Portafogli Inefficienti')
 plt.axhline(y=min_std_dev, color='black', linestyle='--', lw=1.5)
