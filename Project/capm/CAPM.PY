@@ -14,7 +14,7 @@ from selenium.webdriver.support import expected_conditions as EC
 def scrape_sp500_tickers():
     tickers = []
 
-    chrome_driver_path = 'chrome_drivers\\chromedriver_windows.exe'  
+    chrome_driver_path = 'chrome_drivers/chromedriver'  
     chrome_options = Options()
     chrome_options.add_argument('--headless')  
 
@@ -96,7 +96,7 @@ print(f"Expected Portfolio Volatility: {round(np.sqrt(np.dot(weights.T, np.dot(r
 pfolio_returns = []
 pfolio_volatilities = []
 
-for x in range(100):
+for x in range(10):
     weights = np.random.random(num_assets)
     weights /= np.sum(weights)
     
@@ -121,7 +121,7 @@ plt.show()
 
 
 # Scegliamo le azioni da includere nel portafoglio
-test = data[['AAPL','MSFT','NVDA', 'GOOG','META']]
+test = data[['AAPL', 'META']]
 
 # Calcolo i rendimenti giornalieri per ciascuna azione
 returns = test.pct_change(1)*100
@@ -133,7 +133,7 @@ standard_error = np.sqrt(variance)
 cov_matrix = returns.cov()
 
 # Numero di portafogli generati casualmente
-num_portfolios = 1000000
+num_portfolios = 10
 
 # Lista vuota per i risultati
 portfolio_returns = []
@@ -171,27 +171,8 @@ inefficient_portfolio_data = portfolio_data[portfolio_data['Return'] < min_std_d
 efficient_portfolio_data = portfolio_data[portfolio_data['Return'] > min_std_dev]
 P_portfolio_data = portfolio_data[portfolio_data['Return'] == min_std_dev]
 
-# Creo un risk free asset
-q = 2  # Intercetta
-m = (min_std_dev-q)/float(P_portfolio_data['Std Dev']) # Pendenza
-m
-
-# Genero alcune coordinate x per tracciare la retta
-x_values = np.linspace(0, portfolio_data['Std Dev'].max(), 1000)  # genero 100 punti
-
-# Calcolo le coordinate y corrispondenti utilizzando l'equazione della retta: y = mx + q
-y_values = m * x_values + q
-
-# Traccia la retta con linestyle='-', che è il valore predefinito per una linea continua
-ylim_min = []
-if portfolio_data['Return'].min() < q:
-    ylim_min.append(portfolio_data['Return'].min()),
-else:
-    ylim_min.append(0)
-ylim_min
 
 plt.figure(figsize=(10, 6))
-plt.plot(x_values, y_values, color='green', linestyle='-', linewidth=2)
 plt.scatter(efficient_portfolio_data['Std Dev'], efficient_portfolio_data['Return'], alpha=1, color='blue', label='Portafogli Efficienti')
 plt.scatter(inefficient_portfolio_data['Std Dev'], inefficient_portfolio_data['Return'], alpha=1, color='red', label='Portafogli Inefficienti')
 plt.axhline(y=min_std_dev, color='black', linestyle='--', lw=1.5)
@@ -200,7 +181,6 @@ plt.xlabel('Deviazione Standard')
 plt.ylabel('Rendimento atteso')
 plt.title('Tutte le varie combinazioni di portafogli')
 plt.grid(True)
-plt.ylim(ylim_min[0]-2, portfolio_data['Return'].max()+2)
 plt.xlim(0,portfolio_data['Std Dev'].max()+1)
 plt.legend()
 plt.show()
