@@ -47,160 +47,7 @@ def adf_test(column):
 
 adf_test(close_train)
 
-# Seasonal decomposition
-s_dec_additive = seasonal_decompose(close_train, model = 'additive')
-s_dec_additive.plot()
-plt.show()
-
-s_dec_multiplicative = seasonal_decompose(close_train, model = 'multiplicative')
-s_dec_multiplicative.plot()
-plt.show()
-
-# ACF PLOT
-plot_acf(close_train, lags = 40, zero = False)
-plt.title('ACF for Closing Price', size = 24)
-plt.ylim(-1, 1.1)
-plt.show()
-
-# PACF PLOT
-plot_pacf(close_train, lags = 40, zero = False, method = 'ols')
-plt.title('PACF for Closing Price', size = 24)
-plt.ylim(-0.2, 1.1)
-plt.show()
-                                
 ############################################################################################################################
-# Differenzio la serie storica per poi integrarla.
-close_diff = ((close_train.diff()/close_train.shift(1))*100).fillna(value=0)
-close_diff.plot()
-plt.ylabel('Variazione %')
-plt.xlabel('Data')
-plt.title('Rendimenti giornalieri percentuali (%)')
-plt.legend()
-plt.show()
-
-adf_test(close_diff)
-
-# Dalla differenziata torno alla serie dei prezzi.
-close_int = close_train.Close[0] + ((close_diff/100)*close_train.shift(1)).cumsum()
-close_int.Close[0] = close_train.Close[0]
-close_int; close_train
-
-# Le plotto per vedere se combaciano.
-plt.plot(close_int.index, close_int.Close, color='red', label='Serie modificata')
-plt.plot(close_int.index, close_train.Close, color='blue', linestyle=':', label='Serie originale')
-plt.title(f'Prezzi di chiusura giornalieri AAPL dal: {close_train.index.date.min()} al {close_train.index.date.max()}')
-plt.ylabel('Prezzi $')
-plt.xlabel('Data')
-plt.legend()
-plt.show()
-############################################################################################################################
-# Creo una figura in cui plotto la serie di train originale, quella differenziata e per ciascuna l'ACF ed il PACF
-plt.rcParams.update({'figure.figsize':(15,10)})
-fig, axes = plt.subplots(2, 3, sharex=False)
-
-# Serie Originale
-axes[0, 0].plot(close_train, c='blue'); axes[0, 0].set_title('Serie Originale'); axes[0, 0].set_xlabel('Data'); axes[0, 0].set_ylabel('Prezzo $')
-axes[0, 0].tick_params(axis='x', labelrotation = 45)
-
-plot_acf(close_train, ax=axes[0, 1],auto_ylims=True, lags=40, zero=False, c='blue'); axes[0,1].set_xlabel('Lags')
-acf_values, confint = acf(close_train, alpha=0.05, nlags=40)
-lower_bound = confint[0:, 0] - acf_values[0:]
-upper_bound = confint[0:, 1] - acf_values[0:]
-lags = np.arange(0, len(acf_values[0:]))
-ciao = []
-for i in range(len(acf_values[0:])):
-    if acf_values[i] > upper_bound[i]:
-        ciao.append(acf_values[i])
-    elif acf_values[i] < lower_bound[i]:
-        ciao.append(acf_values[i])
-    else:
-        ciao.append('NaN')
-axes[0,1].scatter(x=lags[1:], y=ciao[1:], zorder=3, c='orangered')
-
-plot_pacf(close_train, ax=axes[0, 2],auto_ylims=True, lags=40, zero=False, method='ols', c='blue'); axes[0,2].set_xlabel('Lags')
-pacf_values, confint = pacf(close_train, alpha=0.05, nlags=40, method='ols')
-lower_bound = confint[1:, 0] - pacf_values[1:]
-upper_bound = confint[1:, 1] - pacf_values[1:]
-lags = np.arange(0, len(pacf_values[1:]))
-ciao = []
-for i in range(len(pacf_values[1:])):
-    if pacf_values[i] > upper_bound[0]:
-        ciao.append(pacf_values[i])
-    elif pacf_values[i] < lower_bound[0]:
-        ciao.append(pacf_values[i])
-    else:
-        ciao.append('NaN')
-axes[0,2].scatter(x=lags[1:], y=ciao[1:], zorder=3, c='orangered')
-
-# Differenziazione di 1° ordine
-axes[1, 0].plot(close_diff, c='blue'); axes[1, 0].set_title('Differenziazione di 1° ordine'); axes[1, 0].set_xlabel('Data'); axes[1, 0].set_ylabel('Variazione giornaliera del prezzo (%)')
-axes[1, 0].tick_params(axis='x', labelrotation = 45)
-
-plot_acf(close_diff, ax=axes[1, 1],auto_ylims=True, lags=40, zero=False, c='blue'); axes[1,1].set_xlabel('Lags')
-acf_values, confint = acf(close_diff, alpha=0.05, nlags=40)
-lower_bound = confint[1:, 0] - acf_values[1:]
-upper_bound = confint[1:, 1] - acf_values[1:]
-lags = np.arange(0, len(acf_values[1:]))
-ciao = []
-for i in range(len(acf_values[1:])):
-    if acf_values[i] > upper_bound[i]:
-        ciao.append(acf_values[i])
-    elif acf_values[i] < lower_bound[i]:
-        ciao.append(acf_values[i])
-    else:
-        ciao.append('NaN')
-axes[1,1].scatter(x=lags, y=ciao, zorder=3, c='orangered')
-
-plot_pacf(close_diff, ax=axes[1, 2],auto_ylims=True, lags=40, zero=False, method='ols', c='blue'); axes[1,2].set_xlabel('Lags')
-pacf_values, confint = pacf(close_diff, alpha=0.05, nlags=40, method='ols')
-lower_bound = confint[1:, 0] - pacf_values[1:]
-upper_bound = confint[1:, 1] - pacf_values[1:]
-lags = np.arange(0, len(pacf_values[1:]))
-ciao = []
-for i in range(len(pacf_values[1:])):
-    if pacf_values[i] > upper_bound[0]:
-        ciao.append(pacf_values[i])
-    elif pacf_values[i] < lower_bound[0]:
-        ciao.append(pacf_values[i])
-    else:
-        ciao.append('NaN')
-axes[1,2].scatter(x=lags, y=ciao, zorder=3, c='orangered')
-
-fig.suptitle('Effetto della differenziazione', fontsize=16)
-fig.tight_layout()
-fig.subplots_adjust(hspace=0.4)
-plt.show()
-
-adf_test(close_train)
-adf_test(close_diff)
-
-############################################################################################################################
-# Adesso sulla base del PACF della serie originale, provo a fittare un modello AUTOREGRESSIVO.
-# Model Selection in base all'MSE e AIC
-list_mse = []
-aic = []
-for p in range(1,15):
-    model_ar = ARIMA(close_train, order=(p,0,0))
-    model_ar_fit = model_ar.fit()
-    forecasts = model_ar_fit.forecast(len(close_test['Close']))
-    mean = close_test['Close'].mean()
-    mse = sum((forecasts-mean)**2)/len(close_test['Close'])
-    list_mse.append(mse)
-    aic.append(model_ar_fit.aic)
-
-fig, ax = plt.subplots(2, sharex=False)
-list_mse = pd.Series(list_mse)
-aic = pd.Series(aic)
-min_mse = list_mse.idxmin()+1
-min_aic = aic.idxmin()+1
-
-ax[0].plot(range(1,15), list_mse, marker='o', color='blue'); ax[0].set_title('MSE'); ax[0].set_xlabel('Lags')
-ax[0].scatter(min_mse, list_mse.min(), marker='o', color='red', lw=3, zorder=3)
-ax[1].plot(range(1,15), aic, marker='o', color='blue'); ax[1].set_title('AIC'); ax[1].set_xlabel('Lags')
-ax[1].scatter(min_aic, aic.min(), marker='o', color='red', lw=3, zorder=3)
-fig.subplots_adjust(hspace=0.5)
-plt.show()
-
 
 # ARIMA FORECASTING
 #prendo solo la colonna con i prezzi dal df test
@@ -247,12 +94,14 @@ plt.show()
 # la serie di train è close_train, mentre quella di test è close_test['Close']
 # prima di tutto parliamo di seasonal decomposition, poi magari famo un adf, poi siccome non è un cazzo stazionario
 # magari famo una differenziarione, e devo vedè se riesco a farlo con il seasonal decompose a leva sto cazzo de tren per poi rimetterlo?
-# [X] 1) parliamo dei modelli ARIMA, quindi introduco il concetto di autocorrelazione su cui si basano e parlo del plot acf,
-# [X] 2) faccio il plot acf, perlo della non stazionarietà della serie storica, quindi faccio il seasonal decompose e rimuovo il trend.
-# [X] 3) rimosso il trend faccio il test di stazionarietà e vedo che la serie è stazionaria e rifaccio il acf plot per mostrare la differenza.
-# [ ] 4) parto nuovamenteo con l'acf e pacf e parlo dei modelli ar e ma, poi arma e via. 
-# [ ] 6) il modello è fittato quindi sui residui
-# [ ] 5) discutere dell'orizzonte temporale preso per il forecast e mostrare come con degli one step ahead forecast sono più precisi?
+# [X] 1) parliamo dei modelli ARIMA, quindi introduco il concetto di autocorrelazione su cui si basano e parlo del plot acf, quindi faccio anche il adf
+# [X] 2) faccio anche il seasonal decompose per parlare del fatto che non c'è seasonalità 
+# [X] 3) differenziata la serie faccio il test di stazionarietà e vedo che la serie è stazionaria e rifaccio il acf plot per mostrare la differenza.
+# [X] 4) parto nuovamente con l'acf e pacf. 
+# [ ] 5) Modello AR
+# [ ] 6) Modello MA
+# [ ] 7) Modello ARMA
+# [ ] 8) discutere dell'orizzonte temporale preso per il forecast e mostrare come con degli one step ahead forecast sono più precisi?
 
 
 
@@ -277,104 +126,212 @@ plt.show()
 
 adf_test(close_train)
 
-# 2) Decomposizione della serie per renderla stazionaria, rimuoviamo il trend e facciamo quindi adf e acf plot
-decomposition = seasonal_decompose(close_train, model='additive') # Di default setta un periodo stazionale pari a 5 giorni ovvero una settimana di trading
-decomposition.plot()                                              # restituisce un oggetto con vari attributi tipo trend, stagionalità e residui.
-plt.show()  
-
-decomposition_test = seasonal_decompose(close_test['Close'], model='additive') # Di default setta un periodo stazionale pari a 5 giorni ovvero una settimana di trading
-test_trend = decomposition_test.trend  
-test_res = decomposition_test.resid
-close_test_nores = close_test.Close - test_res
-close_test_nores.isna().sum()
-close_test_nores = close_test_nores.ffill().bfill()
-
-close_test_nt = close_test.Close - test_trend  
-close_test_nt.plot()
-close_test_nt.isna().sum()
-close_test_nt = close_test_nt.ffill().bfill()
-
-train_trend = decomposition.trend                                                               
-close_train_nt = close_train.Close - train_trend
-close_train_nt.plot()
-close_train_nt.isna().sum()
-close_train_nt = close_train_nt.ffill().bfill()
+# 2) seasonal decompose per mostrare che comunque non c'è stagionalità:
+seasonal_decomposition = seasonal_decompose(close_train, extrapolate_trend=1)
+seasonal_decomposition.plot()
 plt.show()
 
-adf_test(close_train_nt) 
+# 3) Differenzio la serie e faccio nuovamente il test di stazionarietà:
+#    Differenzio la serie storica per poi integrarla.
+close_train_diff = ((close_train.diff()/close_train.shift(1))*100).fillna(value=0)
+close_test_diff = ((close_test['Close'].diff()/close_test['Close'].shift(1))*100).fillna(value=0)
 
-plot_acf(close_train_nt,auto_ylims=True, lags=40, zero=True, c='blue')
-acf_values, confint = acf(close_train_nt, alpha=0.05, nlags=40)
+close_train_diff.plot()
+close_test_diff.plot()
+plt.ylabel('Variazione %')
+plt.xlabel('Data')
+plt.title('Rendimenti giornalieri percentuali (%)')
+plt.legend()
+plt.show()
+
+# Dalla differenziata torno alla serie dei prezzi.
+close_int = close_train.Close[0] + ((close_train_diff/100)*close_train.shift(1)).cumsum()
+close_int.Close[0] = close_train.Close[0]
+close_int; close_train
+
+# Le plotto per vedere se combaciano.
+plt.plot(close_int.index, close_int.Close, color='red', label='Serie modificata')
+plt.plot(close_int.index, close_train.Close, color='blue', linestyle=':', label='Serie originale')
+plt.title(f'Prezzi di chiusura giornalieri AAPL dal: {close_train.index.date.min()} al {close_train.index.date.max()}')
+plt.ylabel('Prezzi $')
+plt.xlabel('Data')
+plt.legend()
+plt.show()
+
+adf_test(close_train_diff)
+
+# 4) ACF E PACF DELLA SERIE DIFFERENZIATA vs la serie non differenziata.
+# Creo una figura in cui plotto la serie di train originale, quella differenziata e per ciascuna l'ACF ed il PACF
+plt.rcParams.update({'figure.figsize':(15,10)})
+fig, axes = plt.subplots(2, 3, sharex=False)
+
+# Serie Originale
+axes[0, 0].plot(close_train, c='blue'); axes[0, 0].set_title('Serie Originale'); axes[0, 0].set_xlabel('Data'); axes[0, 0].set_ylabel('Prezzo $')
+axes[0, 0].tick_params(axis='x', labelrotation = 45)
+
+plot_acf(close_train, ax=axes[0, 1],auto_ylims=True, lags=40, zero=False, c='blue', title='ACF Plot'); axes[0,1].set_xlabel('Lags')
+acf_values, confint = acf(close_train, alpha=0.05, nlags=40)
 lower_bound = confint[0:, 0] - acf_values[0:]
 upper_bound = confint[0:, 1] - acf_values[0:]
-lags = []
+lags = np.arange(0, len(acf_values[0:]))
 ciao = []
 for i in range(len(acf_values[0:])):
     if acf_values[i] > upper_bound[i]:
         ciao.append(acf_values[i])
-        lags.append(i)
     elif acf_values[i] < lower_bound[i]:
         ciao.append(acf_values[i])
-        lags.append(i)
     else:
-        None
-plt.scatter(lags, ciao, zorder=3, c='orangered')
-plt.ylabel('Autocorrelation Coefficient')
-plt.xlabel('Lags')
-plt.show()                                                  # Magari si potrebbe fare il grafico figo con 4/6 sublplots con serie, acf e pacf per flexare.
+        ciao.append('NaN')
+axes[0,1].scatter(x=lags[1:], y=ciao[1:], zorder=3, c='orangered')
 
-# 4) Modello ar base base:
-model_ar = ARIMA(close_train_nt, order=(9,0,0)).fit()
-model_ar.summary()
-prediction_ar = model_ar.forecast(len(close_test))
-price_prediction_ar = prediction_ar.cumsum()+ close_train.Close[-1]
-plt.plot(prediction_ar[2:], c='r', zorder=3)
-plt.plot(decomposition_test.resid[2:], c='b')
-#plt.plot(close_train, c='b')
+plot_pacf(close_train, ax=axes[0, 2],auto_ylims=True, lags=40, zero=False, method='ols', c='blue', title='PACF Plot'); axes[0,2].set_xlabel('Lags')
+pacf_values, confint = pacf(close_train, alpha=0.05, nlags=40, method='ols')
+lower_bound = confint[1:, 0] - pacf_values[1:]
+upper_bound = confint[1:, 1] - pacf_values[1:]
+lags = np.arange(0, len(pacf_values[1:]))
+ciao = []
+for i in range(len(pacf_values[1:])):
+    if pacf_values[i] > upper_bound[0]:
+        ciao.append(pacf_values[i])
+    elif pacf_values[i] < lower_bound[0]:
+        ciao.append(pacf_values[i])
+    else:
+        ciao.append('NaN')
+axes[0,2].scatter(x=lags[1:], y=ciao[1:], zorder=3, c='orangered')
+
+# Differenziazione di 1° ordine
+axes[1, 0].plot(close_train_diff, c='blue'); axes[1, 0].set_title('Differenziazione di 1° ordine'); axes[1, 0].set_xlabel('Data'); axes[1, 0].set_ylabel('Variazione giornaliera del prezzo (%)')
+axes[1, 0].tick_params(axis='x', labelrotation = 45)
+
+plot_acf(close_train_diff, ax=axes[1, 1],auto_ylims=True, lags=40, zero=False, c='blue', title='ACF Plot'); axes[1,1].set_xlabel('Lags')
+acf_values, confint = acf(close_train_diff, alpha=0.05, nlags=40)
+lower_bound = confint[1:, 0] - acf_values[1:]
+upper_bound = confint[1:, 1] - acf_values[1:]
+lags = np.arange(0, len(acf_values[1:]))
+ciao = []
+for i in range(len(acf_values[1:])):
+    if acf_values[i] > upper_bound[i]:
+        ciao.append(acf_values[i])
+    elif acf_values[i] < lower_bound[i]:
+        ciao.append(acf_values[i])
+    else:
+        ciao.append('NaN')
+axes[1,1].scatter(x=lags, y=ciao, zorder=3, c='orangered')
+
+plot_pacf(close_train_diff, ax=axes[1, 2],auto_ylims=True, lags=40, zero=False, method='ols', c='blue', title='PACF Plot'); axes[1,2].set_xlabel('Lags')
+pacf_values, confint = pacf(close_train_diff, alpha=0.05, nlags=40, method='ols')
+lower_bound = confint[1:, 0] - pacf_values[1:]
+upper_bound = confint[1:, 1] - pacf_values[1:]
+lags = np.arange(0, len(pacf_values[1:]))
+ciao = []
+for i in range(len(pacf_values[1:])):
+    if pacf_values[i] > upper_bound[0]:
+        ciao.append(pacf_values[i])
+    elif pacf_values[i] < lower_bound[0]:
+        ciao.append(pacf_values[i])
+    else:
+        ciao.append('NaN')
+axes[1,2].scatter(x=lags, y=ciao, zorder=3, c='orangered')
+
+fig.suptitle('Effetto della differenziazione (train set)', fontsize=16)
+fig.tight_layout()
+fig.subplots_adjust(hspace=0.4)
+plt.show()
+
+# 5) Modello AR(9): 
+# Adesso sulla base del PACF della serie originale, provo a fittare un modello AUTOREGRESSIVO.
+# Model Selection in base all'MSE e AIC
+list_mse = []
+aic = []
+for p in range(1,15):
+    model_ar = ARIMA(close_train_diff, order=(p,0,0))
+    model_ar_fit = model_ar.fit()
+    forecasts = model_ar_fit.forecast(len(close_test_diff))
+    mean = close_test_diff.mean()
+    mse = sum((forecasts-mean)**2)/len(close_test_diff)
+    list_mse.append(mse)
+    aic.append(model_ar_fit.aic)
+
+fig, ax = plt.subplots(2, sharex=False)
+list_mse = pd.Series(list_mse)
+aic = pd.Series(aic)
+min_mse = list_mse.idxmin()+1
+min_aic = aic.idxmin()+1
+
+ax[0].plot(range(1,15), list_mse, marker='o', color='blue'); ax[0].set_title('MSE'); ax[0].set_xlabel('Lags')
+ax[0].scatter(min_mse, list_mse.min(), marker='o', color='red', lw=3, zorder=3)
+ax[1].plot(range(1,15), aic, marker='o', color='blue'); ax[1].set_title('AIC'); ax[1].set_xlabel('Lags')
+ax[1].scatter(min_aic, aic.min(), marker='o', color='red', lw=3, zorder=3)
+fig.subplots_adjust(hspace=0.5)
 plt.show()
 
 
-close_train_1 = close_train_nt.copy()
-forecast = []
-forecast_2 = []
-forecast_5 = []
+# Scegliamo il modello AR(9) avendo esso il minor AIC
+model_ar_9 = ARIMA(close_train_diff, order=(9,0,0)) # fittiamo sul test di training
+model_ar_9_fit = model_ar_9.fit()
+model_ar_9_fit.summary()
+forecasts = model_ar_fit.forecast(len(close_test_diff)) # forecast per il numero di osservazioni presenti nel test set
+
+date_range = pd.date_range(start=close_test.index.min(), periods=len(forecasts), freq='B')
+forecasts = pd.Series(forecasts, index=date_range)
+plt.plot(forecasts)
+plt.plot(close_test_diff)
+plt.show()
+
+# ADESSO trasformo i forecast appena effettuati in prezzi effettivi in dollari e li compariamo con il test set
+forecasted_price = []
+start_price = close_train.Close[-1]
+forecasted_price.append(start_price)
+
+for i in range(len(forecasts)):
+    new_price = forecasted_price[-1] + ((forecasts[i])/100) * forecasted_price[-1]
+    forecasted_price.append(new_price)
+
+date_range = pd.date_range(start=close_test.index.min(), periods=len(forecasted_price)-1, freq='B')
+
+# Creare una serie Pandas con i prezzi e le date come indice
+forecasted_price = pd.Series(forecasted_price[1:], index=date_range)
+
+plt.plot(forecasted_price)
+close_train.Close.plot()
+close_test.Close.plot()
+close_test.drift_forecast.plot()
+plt.show()   
+
+
+
+# ARIMA FORECASTING with custom steps-ahead
+close_train_diff_copy = close_train_diff.copy()
+
 start = 0 # indice che mi serve per lo slice delle osservazioni da aggiungere per addestrare il modello
-steps_ahead = len(close_test) # di quanti step vogliamo procedere ogni volta
+steps_ahead = 10 # di quanti step vogliamo procedere ogni volta
+forecasts_list = []
 
-for i in range(int(len(close_test.Close)/steps_ahead)):
-    model_ar = ARIMA(close_train_1, order=(9,0,0))
-    model_ar_fit = model_ar.fit()
-    forecasts = model_ar_fit.forecast(steps_ahead)
-    forecast.extend(forecasts)
+for i in range(int(len(close_test_diff)/steps_ahead)):
+    model_ar_9_step = ARIMA(close_train_diff_copy.Close, order=(9,0,0))
+    model_ar_9_step_fit = model_ar_9_step.fit()
+    forecasts = model_ar_9_step_fit.forecast(steps_ahead)
+    for i in forecasts:
+        forecasts_list.append(i)
 
-    model_ar = ARIMA(close_train_1, order=(2,0,0))
-    model_ar_fit = model_ar.fit()
-    forecasts = model_ar_fit.forecast(steps_ahead)
-    forecast_2.extend(forecasts)
+    close_train_diff_copy = close_train_diff_copy.Close._append(pd.Series(close_test_diff[start:start+steps_ahead]), ignore_index=True)
+    close_train_diff_copy = pd.DataFrame(close_train_diff_copy)# la serie su cui si fitta il modello
 
-    model_ar = ARIMA(close_train_1, order=(5,0,0))
-    model_ar_fit = model_ar.fit()
-    forecasts = model_ar_fit.forecast(steps_ahead)
-    forecast_5.extend(forecasts)
-
-    close_train_1 = close_train_1._append(pd.Series(close_test_nt.iloc[start:start+steps_ahead]), ignore_index=True) # la serie su cui si fitta il modello
     start += steps_ahead
 
-print(len(forecast), len(close_test_nt), len(close_train_nt), len(close_train_1))
+forecasted_price = []
+start_price = close_train.Close[-1]
+forecasted_price.append(start_price)
 
-forecast_summed = pd.Series(forecast, index=close_test.index[:260]).cumsum() + close_test_nores
-forecast_summed_2 = pd.Series(forecast_2, index=close_test.index[:260]).cumsum() + close_test_nores
-forecast_summed_5 = pd.Series(forecast_5, index=close_test.index[:260]).cumsum() + close_test_nores
+for i in range(len(forecasts_list)):
+    new_price = forecasted_price[-1] + ((forecasts_list[i])/100) * forecasted_price[-1]
+    forecasted_price.append(new_price)
 
+date_range = pd.date_range(start=close_test.index.min(), periods=len(forecasted_price)-1, freq='B')
+forecasted_price = pd.Series(forecasted_price[1:], index=date_range)
 
-close_train.Close.plot(label='Actual Prices - Train', c ='blue')
-close_test.Close.plot(label='Actual Prices - Test',c ='b')
-forecast_summed.plot(label='forecasted prices', c='r')
-forecast_summed_2.plot(label='forecasted prices', c='green')
-forecast_summed_5.plot(label='forecasted prices', c='gold')
-plt.title('Forecasts vs. Actual Prices')
-plt.ylabel('Prezzi $')
-plt.xlabel('Data')
-fig.subplots_adjust(hspace=0.5)
-plt.legend()
-plt.show() 
+plt.plot(forecasted_price)
+close_train.Close.plot()
+close_test.Close.plot()
+close_test.drift_forecast.plot()
+plt.show()   
