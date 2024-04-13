@@ -8,6 +8,13 @@ from statsmodels.tsa.stattools import acf, pacf
 from scipy.stats.distributions import chi2
 from statsmodels.tsa.arima.model import ARIMA 
 
+def LLR_test(mod_1, mod_2, DF = 1):
+    L1 = mod_1.fit().llf
+    L2 = mod_2.fit().llf
+    LR = (2*(L2-L1))    
+    p = chi2.sf(LR, DF).round(3)
+    return p
+
 close_train = pd.read_csv('Project\\Thesis\\Train and test data\\close_train.csv', parse_dates=True, index_col='Date')
 close_test = pd.read_csv('Project\\Thesis\\Train and test data\\close_test.csv', parse_dates=True, index_col='Date')[['Close', 'drift_forecast']]
 
@@ -267,39 +274,39 @@ plt.show()
 
 
 # Scegliamo il modello AR(9) avendo esso il minor AIC
-model_ar_9 = ARIMA(close_train_diff, order=(9,0,0)) # fittiamo sul test di training
+model_ar_9 = ARIMA(close_train_diff[1:], order=(9,0,0)) # fittiamo sul test di training
 model_ar_9_fit = model_ar_9.fit()
 model_ar_9_fit.summary()
-forecasts = model_ar_fit.forecast(len(close_test_diff)) # forecast per il numero di osservazioni presenti nel test set
+forecasts_ar = model_ar_9_fit.forecast(len(close_test_diff)) # forecast per il numero di osservazioni presenti nel test set
 
-date_range = pd.date_range(start=close_test.index.min(), periods=len(forecasts), freq='B')
-forecasts = pd.Series(forecasts, index=date_range)
-plt.plot(forecasts)
+date_range = pd.date_range(start=close_test.index.min(), periods=len(forecasts_ar), freq='B')
+forecasts_ar = pd.Series(forecasts_ar, index=date_range)
+plt.plot(forecasts_ar)
 plt.plot(close_test_diff)
 plt.show()
 
 # ADESSO trasformo i forecast appena effettuati in prezzi effettivi in dollari e li compariamo con il test set
-forecasted_price = []
+forecasted_price_ar = []
 start_price = close_train.Close[-1]
-forecasted_price.append(start_price)
+forecasted_price_ar.append(start_price)
 
 for i in range(len(forecasts)):
-    new_price = forecasted_price[-1] + ((forecasts[i])/100) * forecasted_price[-1]
-    forecasted_price.append(new_price)
+    new_price = forecasted_price_ar[-1] + ((forecasts[i])/100) * forecasted_price_ar[-1]
+    forecasted_price_ar.append(new_price)
 
-date_range = pd.date_range(start=close_test.index.min(), periods=len(forecasted_price)-1, freq='B')
+date_range = pd.date_range(start=close_test.index.min(), periods=len(forecasted_price_ar)-1, freq='B')
 
 # Creare una serie Pandas con i prezzi e le date come indice
-forecasted_price = pd.Series(forecasted_price[1:], index=date_range)
+forecasted_price_ar = pd.Series(forecasted_price_ar[1:], index=date_range)
 
-plt.plot(forecasted_price)
+plt.plot(forecasted_price_ar)
 close_train.Close.plot()
 close_test.Close.plot()
 close_test.drift_forecast.plot()
 plt.show()   
 
 
-
+################################################################################################################################################
 # ARIMA FORECASTING with custom steps-ahead
 close_train_diff_copy = close_train_diff.copy()
 
@@ -335,3 +342,125 @@ close_train.Close.plot()
 close_test.Close.plot()
 close_test.drift_forecast.plot()
 plt.show()   
+
+# 5.1) Analisi dei residui del modello AR(9): 
+
+residui = model_ar_9_fit.resid
+residui.mean()
+residui.var()
+adf_test(residui)
+
+plot_acf(residui, zero=False, auto_ylims=True, lags=40)
+plt.show()
+
+residui.plot()
+plt.show()
+
+#################################################################################################################################################
+
+plot_acf(close_train_diff, zero=False, auto_ylims=True, lags=40)
+plt.show()
+
+model_ma_1 = ARIMA(close_train_diff[1:], order = (0,0,1))
+model_ma_1_fit = model_ma_1.fit()
+model_ma_1_fit.summary()
+
+model_ma_2 = ARIMA(close_train_diff[1:], order = (0,0,2))
+model_ma_2_fit = model_ma_2.fit()
+print(model_ma_2_fit.summary())
+print("\nLLR test p-value = " + str(LLR_test(model_ma_1, model_ma_2)))
+
+model_ma_3 = ARIMA(close_train_diff[1:], order = (0,0,3))
+model_ma_3_fit = model_ma_3.fit()
+print(model_ma_3_fit.summary())
+print("\nLLR test p-value = " + str(LLR_test(model_ma_2, model_ma_3)))
+
+model_ma_4 = ARIMA(close_train_diff[1:], order = (0,0,4))
+model_ma_4_fit = model_ma_4.fit()
+print(model_ma_4_fit.summary())
+print("\nLLR test p-value = " + str(LLR_test(model_ma_3, model_ma_4)))
+
+model_ma_5 = ARIMA(close_train_diff[1:], order = (0,0,5))
+model_ma_5_fit = model_ma_5.fit()
+print(model_ma_5_fit.summary())
+print("\nLLR test p-value = " + str(LLR_test(model_ma_4, model_ma_5)))
+
+model_ma_6 = ARIMA(close_train_diff[1:], order = (0,0,6))
+model_ma_6_fit = model_ma_6.fit()
+print(model_ma_6_fit.summary())
+print("\nLLR test p-value = " + str(LLR_test(model_ma_5, model_ma_6)))
+
+model_ma_7 = ARIMA(close_train_diff[1:], order = (0,0,7))
+model_ma_7_fit = model_ma_7.fit()
+print(model_ma_7_fit.summary())
+print("\nLLR test p-value = " + str(LLR_test(model_ma_6, model_ma_7)))
+
+model_ma_8 = ARIMA(close_train_diff[1:], order = (0,0,8))
+model_ma_8_fit = model_ma_8.fit()
+print(model_ma_8_fit.summary())
+print("\nLLR test p-value = " + str(LLR_test(model_ma_7, model_ma_8)))
+
+model_ma_9 = ARIMA(close_train_diff[1:], order = (0,0,9))
+model_ma_9_fit = model_ma_9.fit()
+print(model_ma_9_fit.summary())
+print("\nLLR test p-value = " + str(LLR_test(model_ma_1, model_ma_9, DF=8)))
+
+model_ma_10 = ARIMA(close_train_diff[1:], order = (0,0,10))
+model_ma_10_fit = model_ma_10.fit()
+print(model_ma_10_fit.summary())
+print("\nLLR test p-value = " + str(LLR_test(model_ma_1, model_ma_10, DF=9)))
+
+model_ma_11 = ARIMA(close_train_diff[1:], order = (0,0,11))
+model_ma_11_fit = model_ma_11.fit()
+print(model_ma_11_fit.summary())
+print("\nLLR test p-value = " + str(LLR_test(model_ma_10, model_ma_11, DF=1)))
+
+model_ma_1_fit.aic
+model_ma_2_fit.aic
+model_ma_3_fit.aic
+model_ma_4_fit.aic
+model_ma_5_fit.aic
+model_ma_6_fit.aic
+model_ma_7_fit.aic
+model_ma_8_fit.aic
+model_ma_9_fit.aic
+model_ma_10_fit.aic
+model_ma_11_fit.aic
+
+residui_ma = model_ma_10_fit.resid
+residui_ma.mean()
+residui_ma.var()
+residui_ma.plot()
+plt.show()
+adf_test(residui_ma)
+
+
+forecasts_ma = model_ma_10_fit.forecast(len(close_test_diff)) # forecast per il numero di osservazioni presenti nel test set
+
+date_range = pd.date_range(start=close_test.index.min(), periods=len(forecasts_ma), freq='B')
+forecasts_ma = pd.Series(forecasts_ma, index=date_range)
+plt.plot(forecasts_ma)
+plt.plot(close_test_diff)
+plt.show()
+
+# ADESSO trasformo i forecast appena effettuati in prezzi effettivi in dollari e li compariamo con il test set
+forecasted_price_ma = []
+start_price = close_train.Close[-1]
+forecasted_price_ma.append(start_price)
+
+for i in range(len(forecasts_ma)):
+    new_price = forecasted_price_ma[-1] + ((forecasts[i])/100) * forecasted_price_ma[-1]
+    forecasted_price_ma.append(new_price)
+
+date_range = pd.date_range(start=close_test.index.min(), periods=len(forecasted_price_ma)-1, freq='B')
+
+# Creare una serie Pandas con i prezzi e le date come indice
+forecasted_price_ma = pd.Series(forecasted_price_ma[1:], index=date_range)
+
+plt.plot(forecasted_price_ma)
+close_train.Close.plot(c='b')
+close_test.Close.plot(c='r')
+close_test.drift_forecast.plot(c='purple')
+plt.show()   
+
+
