@@ -464,5 +464,3 @@ close_test.drift_forecast.plot(c='purple')
 plt.show()   
 
 ## LLR solo per modelli nested
-
-
