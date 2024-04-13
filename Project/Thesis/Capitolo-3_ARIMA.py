@@ -463,4 +463,6 @@ close_test.Close.plot(c='r')
 close_test.drift_forecast.plot(c='purple')
 plt.show()   
 
+## LLR solo per modelli nested
+
 
