@@ -21,15 +21,11 @@ close_test = pd.read_csv('Project\\Thesis\\Train and test data\\close_test.csv',
 close_train.head()
 close_test.head()
 
-#Setto la frequenza dei giorni come business days
-close_train = close_train.asfreq('b')
-close_train.isna().sum()
-close_train = close_train.fillna(method = 'ffill')
-close_train.isna().sum()
 
-close_test = close_test.asfreq('b')
-close_test.isna().sum()
-close_test = close_test.fillna(method = 'ffill')
+#Setto la frequenza dei giorni come business days
+close_train.index = pd.date_range(start=close_train.index[0], periods=len(close_train), freq='B')
+close_train.isna().sum()
+close_test.index = pd.date_range(start=close_test.index[0], periods=len(close_test), freq='B')
 close_test.isna().sum()
 
 close_train.plot(figsize=(15,7), label='Close Train', color='blue')
@@ -113,22 +109,11 @@ plt.show()
 
 
 # 1) ACF della serie non stazionaria e adf test:
-plot_acf(close_train,auto_ylims=True, lags=40, zero=False, c='blue')
-acf_values, confint = acf(close_train, alpha=0.05, nlags=40)
-lower_bound = confint[0:, 0] - acf_values[0:]
-upper_bound = confint[0:, 1] - acf_values[0:]
-lags = np.arange(0, len(acf_values[0:]))
-ciao = []
-for i in range(len(acf_values[0:])):
-    if acf_values[i] > upper_bound[i]:
-        ciao.append(acf_values[i])
-    elif acf_values[i] < lower_bound[i]:
-        ciao.append(acf_values[i])
-    else:
-        ciao.append('NaN')
-plt.scatter(x=lags[1:], y=ciao[1:], zorder=3, c='orangered')
-plt.ylabel('Autocorrelation Coefficient')
-plt.xlabel('Lags')
+fig, ax = plt.subplots(1,2, figsize=(20,7))
+ax[0].plot(close_train, color='blue'); ax[0].set_ylabel('Prezzo $', size = 20); ax[0].set_xlabel('Data', size=20); ax[0].set_title('Serie \'close_train\'', size=20)
+plot_acf(close_train,auto_ylims=True, lags=40, zero=True, c='blue', ax=ax[1]); ax[1].set_title('ACF Plot - \'close_train\'', size=20)
+plt.ylabel('Coefficiente di autocorrelazione', size=20)
+plt.xlabel('Lags', size=20)
 plt.show() 
 
 adf_test(close_train)
@@ -140,16 +125,18 @@ plt.show()
 
 # 3) Differenzio la serie e faccio nuovamente il test di stazionarietà:
 #    Differenzio la serie storica per poi integrarla.
-close_train_diff = ((close_train.diff()/close_train.shift(1))*100).fillna(value=0)
-close_test_diff = ((close_test['Close'].diff()/close_test['Close'].shift(1))*100).fillna(value=0)
+close_train_diff = ((close_train.diff()/close_train.shift(1))*100)[1:]
+close_test_diff = ((close_test['Close'].diff()/close_test['Close'].shift(1))*100).bfill()
 
-close_train_diff.plot()
-close_test_diff.plot()
-plt.ylabel('Variazione %')
-plt.xlabel('Data')
-plt.title('Rendimenti giornalieri percentuali (%)')
+close_train_diff.plot(c='b', figsize=(15,7), label='close_train')
+close_test_diff.plot(c='r', label='close_test')
+plt.ylabel('Variazione %', size=20)
+plt.xlabel('Data', size=20)
+plt.title('Rendimenti giornalieri percentuali (%)', size=20)
 plt.legend()
 plt.show()
+
+adf_test(close_train_diff)
 
 # Dalla differenziata torno alla serie dei prezzi.
 close_int = close_train.Close[0] + ((close_train_diff/100)*close_train.shift(1)).cumsum()
@@ -464,3 +451,69 @@ close_test.drift_forecast.plot(c='purple')
 plt.show()   
 
 ## LLR solo per modelli nested
+
+
+import yfinance as yf
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from statsmodels.tsa.arima.model import ARIMA
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
+from sklearn.metrics import mean_squared_error
+
+# Download Apple's daily stock prices
+apple = yf.download("AAPL", start="2019-01-01", end="2024-01-01")
+
+# Calculate daily percentage return
+apple['Daily_Return'] = apple['Adj Close'].pct_change() * 100
+
+# Drop missing values
+apple.dropna(inplace=True)
+
+# Plot the original series
+plt.figure(figsize=(10, 6))
+plt.plot(apple['Daily_Return'], label='Daily Returns')
+plt.title('Apple Daily Returns')
+plt.xlabel('Date')
+plt.ylabel('Daily Returns (%)')
+plt.legend()
+plt.show()
+
+# Split the data into train and test sets (80/20)
+train_size = int(len(apple) * 0.8)
+train, test = apple['Daily_Return'][:train_size], apple['Daily_Return'][train_size:]
+
+# Set frequency of the date index
+train.index = pd.date_range(start=train.index[0], periods=len(train), freq='B')
+test.index = pd.date_range(start=test.index[0], periods=len(test), freq='B')
+
+# Fit MA model
+ma_model = ARIMA(train, order=(0,0,9))
+ma_fit = ma_model.fit()
+
+# Fit AR model
+ar_model = ARIMA(train, order=(10,0,0))
+ar_fit = ar_model.fit()
+
+# Fit ARMA model
+arma_model = ARIMA(train, order=(8,0,7))
+arma_fit = arma_model.fit()
+
+# Forecast
+ma_forecast = ma_fit.forecast(steps=len(test))
+ar_forecast = ar_fit.forecast(steps=len(test))
+arma_forecast = arma_fit.forecast(steps=len(test))
+
+# Plot forecasts
+plt.figure(figsize=(12, 8))
+plt.plot(test.index, test.values, label='Actual')
+plt.plot(test.index, ma_forecast, label='MA Forecast')
+plt.plot(test.index, ar_forecast, label='AR Forecast')
+plt.plot(test.index, arma_forecast, label='ARMA Forecast')
+plt.title('Apple Stock Price Forecast')
+plt.xlabel('Date')
+plt.ylabel('Daily Returns (%)')
+plt.legend()
+plt.show()
+
