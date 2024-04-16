@@ -258,7 +258,8 @@ plt.yticks(size=14)
 plt.title('PACF per i residui del modello AR(1)', size=20)
 plt.show()
 
-
+model_ar_1_fit.resid.mean().round(3)
+model_ar_1_fit.resid.var().round(3)
 
 
 
