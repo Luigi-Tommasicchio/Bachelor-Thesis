@@ -128,8 +128,9 @@ plt.show()
 close_train_diff = ((close_train.diff()/close_train.shift(1))*100)[1:]
 close_test_diff = ((close_test['Close'].diff()/close_test['Close'].shift(1))*100).bfill()
 
-close_train_diff.plot(c='b', figsize=(15,7), label='close_train')
-close_test_diff.plot(c='r', label='close_test')
+plt.rcdefaults()
+close_train_diff.plot(c='blue', figsize=(15,7), label='close_train')
+close_test_diff.plot(c='red', label='close_test')
 plt.ylabel('Variazione %', size=20)
 plt.xlabel('Data', size=20)
 plt.title('Rendimenti giornalieri percentuali (%)', size=20)
@@ -156,48 +157,12 @@ adf_test(close_train_diff)
 
 # 4) ACF E PACF DELLA SERIE DIFFERENZIATA vs la serie non differenziata.
 # Creo una figura in cui plotto la serie di train originale, quella differenziata e per ciascuna l'ACF ed il PACF
-plt.rcParams.update({'figure.figsize':(15,10)})
-fig, axes = plt.subplots(2, 3, sharex=False)
-
-# Serie Originale
-axes[0, 0].plot(close_train, c='blue'); axes[0, 0].set_title('Serie Originale'); axes[0, 0].set_xlabel('Data'); axes[0, 0].set_ylabel('Prezzo $')
-axes[0, 0].tick_params(axis='x', labelrotation = 45)
-
-plot_acf(close_train, ax=axes[0, 1],auto_ylims=True, lags=40, zero=False, c='blue', title='ACF Plot'); axes[0,1].set_xlabel('Lags')
-acf_values, confint = acf(close_train, alpha=0.05, nlags=40)
-lower_bound = confint[0:, 0] - acf_values[0:]
-upper_bound = confint[0:, 1] - acf_values[0:]
-lags = np.arange(0, len(acf_values[0:]))
-ciao = []
-for i in range(len(acf_values[0:])):
-    if acf_values[i] > upper_bound[i]:
-        ciao.append(acf_values[i])
-    elif acf_values[i] < lower_bound[i]:
-        ciao.append(acf_values[i])
-    else:
-        ciao.append('NaN')
-axes[0,1].scatter(x=lags[1:], y=ciao[1:], zorder=3, c='orangered')
-
-plot_pacf(close_train, ax=axes[0, 2],auto_ylims=True, lags=40, zero=False, method='ols', c='blue', title='PACF Plot'); axes[0,2].set_xlabel('Lags')
-pacf_values, confint = pacf(close_train, alpha=0.05, nlags=40, method='ols')
-lower_bound = confint[1:, 0] - pacf_values[1:]
-upper_bound = confint[1:, 1] - pacf_values[1:]
-lags = np.arange(0, len(pacf_values[1:]))
-ciao = []
-for i in range(len(pacf_values[1:])):
-    if pacf_values[i] > upper_bound[0]:
-        ciao.append(pacf_values[i])
-    elif pacf_values[i] < lower_bound[0]:
-        ciao.append(pacf_values[i])
-    else:
-        ciao.append('NaN')
-axes[0,2].scatter(x=lags[1:], y=ciao[1:], zorder=3, c='orangered')
+plt.rcdefaults()
+plt.rcParams.update({'figure.figsize':(14,6)})
+fig, axes = plt.subplots(1, 2, sharex=False)
 
 # Differenziazione di 1° ordine
-axes[1, 0].plot(close_train_diff, c='blue'); axes[1, 0].set_title('Differenziazione di 1° ordine'); axes[1, 0].set_xlabel('Data'); axes[1, 0].set_ylabel('Variazione giornaliera del prezzo (%)')
-axes[1, 0].tick_params(axis='x', labelrotation = 45)
-
-plot_acf(close_train_diff, ax=axes[1, 1],auto_ylims=True, lags=40, zero=False, c='blue', title='ACF Plot'); axes[1,1].set_xlabel('Lags')
+plot_acf(close_train_diff, ax=axes[0],auto_ylims=False, lags=40, zero=True, c='blue', title=None); axes[0].set_xlabel('Lag', size=15)
 acf_values, confint = acf(close_train_diff, alpha=0.05, nlags=40)
 lower_bound = confint[1:, 0] - acf_values[1:]
 upper_bound = confint[1:, 1] - acf_values[1:]
@@ -210,9 +175,9 @@ for i in range(len(acf_values[1:])):
         ciao.append(acf_values[i])
     else:
         ciao.append('NaN')
-axes[1,1].scatter(x=lags, y=ciao, zorder=3, c='orangered')
+axes[0].scatter(x=lags, y=ciao, zorder=3, c='orangered')
 
-plot_pacf(close_train_diff, ax=axes[1, 2],auto_ylims=True, lags=40, zero=False, method='ols', c='blue', title='PACF Plot'); axes[1,2].set_xlabel('Lags')
+plot_pacf(close_train_diff, ax=axes[1],auto_ylims=False, lags=40, zero=True, method='ols', c='blue', title=None); axes[1].set_xlabel('Lag', size=15)
 pacf_values, confint = pacf(close_train_diff, alpha=0.05, nlags=40, method='ols')
 lower_bound = confint[1:, 0] - pacf_values[1:]
 upper_bound = confint[1:, 1] - pacf_values[1:]
@@ -225,11 +190,12 @@ for i in range(len(pacf_values[1:])):
         ciao.append(pacf_values[i])
     else:
         ciao.append('NaN')
-axes[1,2].scatter(x=lags, y=ciao, zorder=3, c='orangered')
-
-fig.suptitle('Effetto della differenziazione (train set)', fontsize=16)
-fig.tight_layout()
-fig.subplots_adjust(hspace=0.4)
+axes[1].scatter(x=lags, y=ciao, zorder=3, c='orangered')
+axes[0].set_ylim(-0.2, 1.05)
+axes[1].set_ylim(-0.2, 1.05)
+axes[0].set_title("Autocorrelation Function", fontsize=18)
+axes[1].set_title("Partial Autocorrelation Function", fontsize=18)
+fig.suptitle('ACF e PACF per la serie di addestramento differenziata', fontsize=20, y=1)
 plt.show()
 
 # 5) Modello AR(9): 
@@ -260,7 +226,51 @@ fig.subplots_adjust(hspace=0.5)
 plt.show()
 
 
-# Scegliamo il modello AR(9) avendo esso il minor AIC
+# Scegliamo il modello AR avendo esso il minor AIC
+# modello AR 1
+model_ar_1 = ARIMA(close_train_diff[1:], order=(1,0,0))
+model_ar_1_fit = model_ar_1.fit()
+model_ar_1_fit.summary()
+
+from  statsmodels.stats.diagnostic import acorr_ljungbox as ljungbox
+ljungbox(model_ar_1_fit.resid, lags=1)
+
+residui_ar_1 = model_ar_1_fit.resid
+
+plt.rcParams.update({'figure.figsize':(10,7)})
+plot_pacf(residui_ar_1,auto_ylims=True, lags=40, zero=False, c='blue')
+acf_values, confint = pacf(residui_ar_1, alpha=0.05, nlags=40)
+lower_bound = confint[1:, 0] - acf_values[1:]
+upper_bound = confint[1:, 1] - acf_values[1:]
+lags = np.arange(0, len(acf_values[1:]))
+ciao = []
+for i in range(len(acf_values[1:])):
+    if acf_values[i] > upper_bound[i]:
+        ciao.append(acf_values[i])
+    elif acf_values[i] < lower_bound[i]:
+        ciao.append(acf_values[i])
+    else:
+        ciao.append('NaN')
+plt.scatter(x=lags, y=ciao, zorder=3, c='orangered', lw=4)
+plt.xlabel('Lag', size=18)
+plt.xticks(size=14)
+plt.yticks(size=14)
+plt.title('PACF per i residui del modello AR(1)', size=20)
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+forecasts_ar = model_ar_1_fit.forecast(len(close_test_diff))
+
 model_ar_9 = ARIMA(close_train_diff[1:], order=(9,0,0)) # fittiamo sul test di training
 model_ar_9_fit = model_ar_9.fit()
 model_ar_9_fit.summary()
