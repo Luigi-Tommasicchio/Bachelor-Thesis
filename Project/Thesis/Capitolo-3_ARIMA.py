@@ -238,8 +238,8 @@ ljungbox(model_ar_1_fit.resid, lags=1)
 residui_ar_1 = model_ar_1_fit.resid
 
 plt.rcParams.update({'figure.figsize':(10,7)})
-plot_pacf(residui_ar_1,auto_ylims=True, lags=40, zero=False, c='blue')
-acf_values, confint = pacf(residui_ar_1, alpha=0.05, nlags=40)
+plot_acf(residui_ar_1,auto_ylims=True, lags=40, zero=False, c='blue')
+acf_values, confint = acf(residui_ar_1, alpha=0.05, nlags=40)
 lower_bound = confint[1:, 0] - acf_values[1:]
 upper_bound = confint[1:, 1] - acf_values[1:]
 lags = np.arange(0, len(acf_values[1:]))
@@ -251,21 +251,48 @@ for i in range(len(acf_values[1:])):
         ciao.append(acf_values[i])
     else:
         ciao.append('NaN')
-plt.scatter(x=lags, y=ciao, zorder=3, c='orangered', lw=4)
+plt.scatter(x=lags, y=ciao, zorder=3, c='orangered', lw=2)
 plt.xlabel('Lag', size=18)
 plt.xticks(size=14)
 plt.yticks(size=14)
-plt.title('PACF per i residui del modello AR(1)', size=20)
+plt.title('ACF per i residui del modello AR(1)', size=20)
+plt.show()
+
+residui_ar_1.plot()
 plt.show()
 
 model_ar_1_fit.resid.mean().round(3)
 model_ar_1_fit.resid.var().round(3)
 
+model_ar_7 = ARIMA(close_train_diff[1:], order=(7,0,0))
+model_ar_7_fit = model_ar_7.fit()
+model_ar_7_fit.summary()
+
+LLR_test(model_ar_1, model_ar_7, DF=6)
+
+model_ar_8 = ARIMA(close_train_diff[1:], order=(8,0,0))
+model_ar_8_fit = model_ar_8.fit()
+model_ar_8_fit.summary()
+
+LLR_test(model_ar_1, model_ar_8, DF=7)
+
+model_ar_9 = ARIMA(close_train_diff[1:], order=(9,0,0))
+model_ar_9_fit = model_ar_9.fit()
+model_ar_9_fit.summary()
+
+LLR_test(model_ar_8, model_ar_9, DF=1)
+LLR_test(model_ar_1, model_ar_9, DF=8)
+
+model_ar_10 = ARIMA(close_train_diff[1:], order=(10,0,0))
+model_ar_10_fit = model_ar_10.fit()
+model_ar_10_fit.summary()
+
+model_ar_10_fit.resid.plot()
+plt.show()
 
 
-
-
-
+LLR_test(model_ar_9, model_ar_10, DF=1)
+LLR_test(model_ar_1, model_ar_10, DF=9)
 
 
 
