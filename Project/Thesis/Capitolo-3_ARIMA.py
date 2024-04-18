@@ -108,7 +108,10 @@ plt.show()
 
 
 
+# Capitolo 3: Modellazione
 # 1) ACF della serie non stazionaria e adf test:
+adf_test(close_train)
+
 fig, ax = plt.subplots(1,2, figsize=(20,7))
 ax[0].plot(close_train, color='blue'); ax[0].set_ylabel('Prezzo $', size = 20); ax[0].set_xlabel('Data', size=20); ax[0].set_title('Serie \'close_train\'', size=20)
 plot_acf(close_train,auto_ylims=True, lags=40, zero=True, c='blue', ax=ax[1]); ax[1].set_title('ACF Plot - \'close_train\'', size=20)
@@ -116,15 +119,12 @@ plt.ylabel('Coefficiente di autocorrelazione', size=20)
 plt.xlabel('Lags', size=20)
 plt.show() 
 
-adf_test(close_train)
-
 # 2) seasonal decompose per mostrare che comunque non c'è stagionalità:
 seasonal_decomposition = seasonal_decompose(close_train, extrapolate_trend=1)
 seasonal_decomposition.plot()
 plt.show()
 
 # 3) Differenzio la serie e faccio nuovamente il test di stazionarietà:
-#    Differenzio la serie storica per poi integrarla.
 close_train_diff = ((close_train.diff()/close_train.shift(1))*100)[1:]
 close_test_diff = ((close_test['Close'].diff()/close_test['Close'].shift(1))*100).bfill()
 
@@ -153,8 +153,7 @@ plt.xlabel('Data')
 plt.legend()
 plt.show()
 
-adf_test(close_train_diff)
-
+# Capitolo 3.1: Modello Autoregressivo AR(p):
 # 4) ACF E PACF DELLA SERIE DIFFERENZIATA vs la serie non differenziata.
 # Creo una figura in cui plotto la serie di train originale, quella differenziata e per ciascuna l'ACF ed il PACF
 plt.rcdefaults()
@@ -162,6 +161,7 @@ plt.rcParams.update({'figure.figsize':(14,6)})
 fig, axes = plt.subplots(1, 2, sharex=False)
 
 # Differenziazione di 1° ordine
+# plotto a sinistra l'acf:
 plot_acf(close_train_diff, ax=axes[0],auto_ylims=False, lags=40, zero=True, c='blue', title=None); axes[0].set_xlabel('Lag', size=15)
 acf_values, confint = acf(close_train_diff, alpha=0.05, nlags=40)
 lower_bound = confint[1:, 0] - acf_values[1:]
@@ -177,6 +177,7 @@ for i in range(len(acf_values[1:])):
         ciao.append('NaN')
 axes[0].scatter(x=lags, y=ciao, zorder=3, c='orangered')
 
+# plotto a destra il pacf:
 plot_pacf(close_train_diff, ax=axes[1],auto_ylims=False, lags=40, zero=True, method='ols', c='blue', title=None); axes[1].set_xlabel('Lag', size=15)
 pacf_values, confint = pacf(close_train_diff, alpha=0.05, nlags=40, method='ols')
 lower_bound = confint[1:, 0] - pacf_values[1:]
@@ -191,6 +192,8 @@ for i in range(len(pacf_values[1:])):
     else:
         ciao.append('NaN')
 axes[1].scatter(x=lags, y=ciao, zorder=3, c='orangered')
+
+# qui sistemo un po' di parametri per sistemare i grafici:
 axes[0].set_ylim(-0.2, 1.05)
 axes[1].set_ylim(-0.2, 1.05)
 axes[0].set_title("Autocorrelation Function", fontsize=18)
@@ -228,14 +231,19 @@ plt.show()
 
 # Scegliamo il modello AR avendo esso il minor AIC
 # modello AR 1
-model_ar_1 = ARIMA(close_train_diff[1:], order=(1,0,0))
+model_ar_1 = ARIMA(close_train_diff[1:],order=(1,0,0))
 model_ar_1_fit = model_ar_1.fit()
 model_ar_1_fit.summary()
 
-from  statsmodels.stats.diagnostic import acorr_ljungbox as ljungbox
-ljungbox(model_ar_1_fit.resid, lags=1)
-
 residui_ar_1 = model_ar_1_fit.resid
+
+# Analisi grafica dei residui: 
+plt.rcParams.update({'figure.figsize':(15,7)})
+fig, ax = plt.subplots(1,2)
+residui_ar_1.plot(ax=ax[0], c='blue'); ax[0].set_title('Time plot', size=18); ax[0].set_xlabel('Data', size=16); ax[0].set_ylabel('Rendimento %', size=16)
+residui_ar_1.plot(kind='hist', bins=50, ax=ax[1], color='blue'); ax[1].set_title('Istogramma', size=18); ax[1].set_xlabel('Rendimento %', size=16); ax[1].set_ylabel('Frequenza', size=16)
+fig.suptitle('Analisi grafica dei residui del modello AR(1):', size=20)
+plt.show()
 
 plt.rcParams.update({'figure.figsize':(10,7)})
 plot_acf(residui_ar_1,auto_ylims=True, lags=40, zero=False, c='blue')
@@ -258,11 +266,26 @@ plt.yticks(size=14)
 plt.title('ACF per i residui del modello AR(1)', size=20)
 plt.show()
 
-residui_ar_1.plot()
-plt.show()
+
+# test di normalità dei residui delmodello AR(1): 
+from scipy import stats
+import statsmodels.api as sm
+
+shapiro_test = stats.shapiro(residui_ar_1)
+print("Test statistic:", shapiro_test.statistic)
+print("p-value:", shapiro_test.pvalue)
+
+alpha = 0.05
+if shapiro_test.pvalue > alpha:
+    print("I dati sembrano essere distribuiti normalmente (non si rifiuta l'ipotesi nulla)")
+else:
+    print("I dati non sembrano essere distribuiti normalmente (si rifiuta l'ipotesi nulla)")
+
 
 model_ar_1_fit.resid.mean().round(3)
 model_ar_1_fit.resid.var().round(3)
+
+
 
 model_ar_7 = ARIMA(close_train_diff[1:], order=(7,0,0))
 model_ar_7_fit = model_ar_7.fit()
