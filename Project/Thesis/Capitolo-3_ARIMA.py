@@ -275,6 +275,9 @@ plt.yticks(size=14)
 plt.title('ACF per i residui del modello AR(1)', size=20)
 plt.show()
 
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# !!           COME PLOTTARE LE PREVISIONI CON TANTO DI INTERVALLO DI CONFIDENZA            !!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # Plot delle previsioni e degli intervalli di confidenza
 fig, ax = plt.subplots(figsize=(10, 6))
@@ -299,15 +302,7 @@ plt.title('Previsioni AR(1) con intervalli di confidenza')
 # Mostra il grafico
 plt.show()
 
-
-
-
-
-
-
-
-
-
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 
 
