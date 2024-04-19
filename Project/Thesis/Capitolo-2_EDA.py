@@ -46,6 +46,8 @@ import seaborn as sns
 plt.figure(figsize=(10, 8))
 sns.heatmap(corr, annot=True, cmap='Blues', fmt=".2f")
 sns.set_theme(font_scale=1.5)
+plt.xlabel(size=15)
+plt.ylabel(size=15)
 plt.grid(None)
 plt.title('Heatmap delle Correlazioni', size=30, y=1.02)
 plt.show()
