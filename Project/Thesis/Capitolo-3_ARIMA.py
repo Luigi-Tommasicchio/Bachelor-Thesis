@@ -240,7 +240,6 @@ var = residui_ar_1.var()
 sd = np.sqrt(var)
 mean = residui_ar_1.mean()
 
-
 # Analisi grafica dei residui: 
 plt.rcParams.update({'figure.figsize':(15,7)})
 fig, ax = plt.subplots(1,2)
@@ -277,30 +276,53 @@ plt.title('ACF per i residui del modello AR(1)', size=20)
 plt.show()
 
 
+# Plot delle previsioni e degli intervalli di confidenza
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# Plotta i dati osservati (se disponibili)
+ax.plot(close_train_diff, label='Dati osservati', color='blue')
+
+# Plotta le previsioni
+forecast = model_ar_1_fit.forecast(steps=100)  # Numero di passi previsti nel futuro
+ax.plot(forecast, label='Previsioni', color='red')
+
+# Plotta gli intervalli di confidenza
+forecast_ci = model_ar_1_fit.get_forecast(steps=100).conf_int()  # Calcola gli intervalli di confidenza
+ax.fill_between(x=forecast_ci.index, y1=forecast_ci.iloc[:,0], y2=forecast_ci.iloc[:,1], color='lightgrey')
+
+# Aggiungi etichette, legenda, titolo, ecc.
+ax.set_xlabel('Tempo')
+ax.set_ylabel('Valore')
+ax.legend()
+plt.title('Previsioni AR(1) con intervalli di confidenza')
+
+# Mostra il grafico
+plt.show()
 
 
 
-# test di normalità dei residui delmodello AR(1): 
-from statsmodels.stats.stattools import jarque_bera
 
-# Esegui il test di Jarque-Bera
-jb_stat, jb_p_value, skewness, kurtosis = jarque_bera(residui_ar_1)
 
-# Stampa i risultati
-print("Statistiche di Jarque-Bera:", jb_stat)
-print("Valore p:", jb_p_value)
-print("Skewness:", skewness)
-print("Kurtosis:", kurtosis)
 
-# Interpretazione del test
-alpha = 0.05
-if jb_p_value > alpha:
-    print("Non possiamo rifiutare l'ipotesi nulla di normalità.")
-else:
-    print("Rifiutiamo l'ipotesi nulla di normalità.")
 
-model_ar_1_fit.resid.mean().round(3)
-model_ar_1_fit.resid.var().round(3)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
