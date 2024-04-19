@@ -236,12 +236,22 @@ model_ar_1_fit = model_ar_1.fit()
 model_ar_1_fit.summary()
 
 residui_ar_1 = model_ar_1_fit.resid
+var = residui_ar_1.var()
+sd = np.sqrt(var)
+mean = residui_ar_1.mean()
+
 
 # Analisi grafica dei residui: 
 plt.rcParams.update({'figure.figsize':(15,7)})
 fig, ax = plt.subplots(1,2)
 residui_ar_1.plot(ax=ax[0], c='blue'); ax[0].set_title('Time plot', size=18); ax[0].set_xlabel('Data', size=16); ax[0].set_ylabel('Rendimento %', size=16)
 residui_ar_1.plot(kind='hist', bins=50, ax=ax[1], color='blue'); ax[1].set_title('Istogramma', size=18); ax[1].set_xlabel('Rendimento %', size=16); ax[1].set_ylabel('Frequenza', size=16)
+ax[0].axhline(y=mean, color='red', linestyle='--', label=r'$\mu$', lw=2)
+ax[1].axvline(x=sd, color='red', linestyle='--', label=r'+1 $\sigma$', lw=2)
+ax[1].axvline(x=-sd, color='red', linestyle='--', label=r'-1 $\sigma$', lw=2)
+ax[1].axvline(x=mean, color='orange', linestyle='--', label=r'$\mu$', lw=2)
+ax[0].legend()
+ax[1].legend()
 fig.suptitle('Analisi grafica dei residui del modello AR(1):', size=20)
 plt.show()
 
@@ -267,20 +277,27 @@ plt.title('ACF per i residui del modello AR(1)', size=20)
 plt.show()
 
 
+
+
+
 # test di normalità dei residui delmodello AR(1): 
-from scipy import stats
-import statsmodels.api as sm
+from statsmodels.stats.stattools import jarque_bera
 
-shapiro_test = stats.shapiro(residui_ar_1)
-print("Test statistic:", shapiro_test.statistic)
-print("p-value:", shapiro_test.pvalue)
+# Esegui il test di Jarque-Bera
+jb_stat, jb_p_value, skewness, kurtosis = jarque_bera(residui_ar_1)
 
+# Stampa i risultati
+print("Statistiche di Jarque-Bera:", jb_stat)
+print("Valore p:", jb_p_value)
+print("Skewness:", skewness)
+print("Kurtosis:", kurtosis)
+
+# Interpretazione del test
 alpha = 0.05
-if shapiro_test.pvalue > alpha:
-    print("I dati sembrano essere distribuiti normalmente (non si rifiuta l'ipotesi nulla)")
+if jb_p_value > alpha:
+    print("Non possiamo rifiutare l'ipotesi nulla di normalità.")
 else:
-    print("I dati non sembrano essere distribuiti normalmente (si rifiuta l'ipotesi nulla)")
-
+    print("Rifiutiamo l'ipotesi nulla di normalità.")
 
 model_ar_1_fit.resid.mean().round(3)
 model_ar_1_fit.resid.var().round(3)
