@@ -275,6 +275,86 @@ plt.yticks(size=14)
 plt.title('ACF per i residui del modello AR(1)', size=20)
 plt.show()
 
+# Ciclo FOR per addestrare modelli AR con ordini da 1 a 15 e calcolare le metriche
+aic = []
+sse = []
+
+for i in range(1, 21):
+    model = ARIMA(close_train_diff[1:], order=(i,0,0)).fit()
+    aic.append(model.aic)
+    sse.append(model.sse)
+# Visualizzazione delle metriche
+fig, ax = plt.subplots(1,2, figsize=(13, 5))
+plt.subplots_adjust(hspace=.5, wspace=.3)
+ax[0].plot(range(1, 21), aic, label='AIC', color='blue', lw=2); ax[0].set_xlabel('Lags', size=14); ax[0].set_title('Akaike Information Criterion', size=16)
+ax[1].plot(range(1, 21), sse, label='SSE', color='blue', lw=2); ax[1].set_xlabel('Lags', size=14); ax[1].set_title('Sum of Squared Errors', size=16)
+ax[0].scatter(9, aic[8], zorder=3, color='red', lw=4)
+fig.suptitle('Metriche di valutazione dei modelli AR(p)', size=20, y=1.0)
+ax[0].set_xticks(range(1, 21))
+ax[1].set_xticks(range(1, 21))
+plt.show()
+
+# Trovato il minimo dell'aic per il lag 9, si procede quindi al fitting del modello nuovo con la stampa del summary.
+model_ar_9 = ARIMA(close_train_diff[1:], order=(9,0,0))
+model_ar_9_fit = model_ar_9.fit()
+model_ar_9_fit.summary()
+
+residui_ar_9 = model_ar_9_fit.resid
+var = residui_ar_9.var()
+sd = np.sqrt(var)
+mean = residui_ar_9.mean()
+
+plt.rcParams.update({'figure.figsize':(15,7)})
+fig, ax = plt.subplots(1,2)
+residui_ar_9.plot(ax=ax[0], c='blue'); ax[0].set_title('Time plot', size=18); ax[0].set_xlabel('Data', size=16); ax[0].set_ylabel('Rendimento %', size=16)
+residui_ar_9.plot(kind='hist', bins=50, ax=ax[1], color='blue'); ax[1].set_title('Istogramma', size=18); ax[1].set_xlabel('Rendimento %', size=16); ax[1].set_ylabel('Frequenza', size=16)
+ax[0].axhline(y=mean, color='red', linestyle='--', label=r'$\mu$', lw=2)
+ax[1].axvline(x=sd, color='red', linestyle='--', label=r'+1 $\sigma$', lw=2)
+ax[1].axvline(x=-sd, color='red', linestyle='--', label=r'-1 $\sigma$', lw=2)
+ax[1].axvline(x=mean, color='orange', linestyle='--', label=r'$\mu$', lw=2)
+ax[0].legend()
+ax[1].legend()
+fig.suptitle('Analisi grafica dei residui del modello AR(9):', size=20)
+plt.show()
+
+fig, ax = plt.subplots(1,2)
+plt.rcParams.update({'figure.figsize':(15,7)})
+plot_acf(residui_ar_1,auto_ylims=True, lags=40, zero=False, c='blue', ax=ax[0])
+acf_values, confint = acf(residui_ar_1, alpha=0.05, nlags=40)
+lower_bound = confint[1:, 0] - acf_values[1:]
+upper_bound = confint[1:, 1] - acf_values[1:]
+lags = np.arange(0, len(acf_values[1:]))
+ciao = []
+for i in range(len(acf_values[1:])):
+    if acf_values[i] > upper_bound[i]:
+        ciao.append(acf_values[i])
+    elif acf_values[i] < lower_bound[i]:
+        ciao.append(acf_values[i])
+    else:
+        ciao.append('NaN')
+ax[0].scatter(x=lags, y=ciao, zorder=3, c='orangered', lw=2)
+plot_acf(residui_ar_9,auto_ylims=True, lags=40, zero=False, c='blue', ax=ax[1])
+acf_values, confint = acf(residui_ar_9, alpha=0.05, nlags=40)
+lower_bound = confint[1:, 0] - acf_values[1:]
+upper_bound = confint[1:, 1] - acf_values[1:]
+lags = np.arange(0, len(acf_values[1:]))
+ciao = []
+for i in range(len(acf_values[1:])):
+    if acf_values[i] > upper_bound[i]:
+        ciao.append(acf_values[i])
+    elif acf_values[i] < lower_bound[i]:
+        ciao.append(acf_values[i])
+    else:
+        ciao.append('NaN')
+ax[1].scatter(x=lags, y=ciao, zorder=3, c='orangered', lw=2)
+fig.suptitle('ACF per i residui', size=20)
+ax[0].set_title('ACF Residui AR(1)', size=16)
+ax[1].set_title('ACF Residui AR(9)', size=16)
+ax[0].set_xlabel('Lags', size=14)
+ax[1].set_xlabel('Lags', size=14)
+plt.show()
+
+
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # !!           COME PLOTTARE LE PREVISIONI CON TANTO DI INTERVALLO DI CONFIDENZA            !!
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
