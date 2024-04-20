@@ -358,6 +358,87 @@ plt.show()
 
 
 
+# Modello MA(q)
+plt.rcdefaults()
+plt.rcParams.update({'figure.figsize':(14,6)})
+fig, ax = plt.subplots(1, 2, sharex=False)
+
+# Differenziazione di 1° ordine
+# plotto a sinistra l'acf:
+plot_acf(close_train_diff, ax=ax[0],auto_ylims=False, lags=40, zero=True, c='blue', title=None); ax[0].set_xlabel('Lags', size=15)
+acf_values, confint = acf(close_train_diff, alpha=0.05, nlags=40)
+lower_bound = confint[1:, 0] - acf_values[1:]
+upper_bound = confint[1:, 1] - acf_values[1:]
+lags = np.arange(0, len(acf_values[1:]))
+ciao = []
+for i in range(len(acf_values[1:])):
+    if acf_values[i] > upper_bound[i]:
+        ciao.append(acf_values[i])
+    elif acf_values[i] < lower_bound[i]:
+        ciao.append(acf_values[i])
+    else:
+        ciao.append('NaN')
+ax[0].scatter(x=lags, y=ciao, zorder=3, c='orangered')
+
+# plotto a destra il minimo dell'aic:
+aic = []
+for i in range(1, 21):
+    model = ARIMA(close_train_diff[1:], order=(0,0,i)).fit()
+    aic.append(model.aic)
+# Visualizzazione delle metriche
+ax[1].plot(range(1, 21), aic, label='AIC', color='blue', lw=2); ax[1].set_xlabel('Lags', size=14); ax[1].set_title('Akaike Information Criterion', size=16)
+ax[1].scatter(14, aic[13], zorder=3, color='red', lw=4)
+ax[1].set_xticks(range(1, 21))
+ax[0].set_ylim(-0.2, 1.05)
+ax[0].set_title("ACF plot", fontsize=18)
+fig.suptitle('ACF e AIC per la scelta dell\'ordine q', fontsize=20, y=1)
+plt.show()
+
+
+# Fittiamo il modello ma(14)
+model_ma_14 = ARIMA(close_train_diff[1:], order=(0,0,14))
+model_ma_14_fit = model_ma_14.fit()
+model_ma_14_fit.summary()
+
+
+residui_ma_14 = model_ma_14_fit.resid
+var = residui_ma_14.var()
+sd = np.sqrt(var)
+mean = residui_ma_14.mean()
+
+plt.rcParams.update({'figure.figsize':(15,7)})
+fig, ax = plt.subplots(1,2)
+residui_ma_14.plot(ax=ax[0], c='blue'); ax[0].set_title('Time plot', size=18); ax[0].set_xlabel('Data', size=16); ax[0].set_ylabel('Rendimento %', size=16)
+residui_ma_14.plot(kind='hist', bins=50, ax=ax[1], color='blue'); ax[1].set_title('Istogramma', size=18); ax[1].set_xlabel('Rendimento %', size=16); ax[1].set_ylabel('Frequenza', size=16)
+ax[0].axhline(y=mean, color='red', linestyle='--', label=r'$\mu$', lw=2)
+ax[1].axvline(x=sd, color='red', linestyle='--', label=r'+1 $\sigma$', lw=2)
+ax[1].axvline(x=-sd, color='red', linestyle='--', label=r'-1 $\sigma$', lw=2)
+ax[1].axvline(x=mean, color='orange', linestyle='--', label=r'$\mu$', lw=2)
+ax[0].legend()
+ax[1].legend()
+fig.suptitle('Analisi grafica dei residui del modello AR(9):', size=20)
+plt.show()
+
+plt.rcParams.update({'figure.figsize':(10,7)})
+plot_acf(residui_ma_14,auto_ylims=True, lags=40, zero=False, c='blue')
+plt.xlabel('Lags', size=16)
+plt.title('ACF dei residui del modello MA(14)', size=20)
+plt.show()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
