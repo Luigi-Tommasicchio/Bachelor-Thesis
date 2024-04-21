@@ -416,7 +416,7 @@ ax[1].axvline(x=-sd, color='red', linestyle='--', label=r'-1 $\sigma$', lw=2)
 ax[1].axvline(x=mean, color='orange', linestyle='--', label=r'$\mu$', lw=2)
 ax[0].legend()
 ax[1].legend()
-fig.suptitle('Analisi grafica dei residui del modello AR(9):', size=20)
+fig.suptitle('Analisi grafica dei residui del modello MA(14):', size=20)
 plt.show()
 
 plt.rcParams.update({'figure.figsize':(10,7)})
@@ -427,19 +427,80 @@ plt.show()
 
 
 
+# ARMA (p,q) Model:
+import seaborn as sns
+
+# I tuoi dati in formato pd.Series
+# Assicurati di sostituire questo con la tua serie di dati
+
+# Genera le combinazioni di p e q
+max_p = 10
+max_q = 10
+pq_combinations = [(p, q) for p in range(max_p + 1) for q in range(max_q + 1)]
+
+# Inizializza una matrice per salvare i valori di AIC
+aic_matrix = np.zeros((max_p + 1, max_q + 1))
+
+# Addestra i modelli ARMA e salva i valori AIC
+for p, q in pq_combinations:
+    if p == 0 and q == 0:
+        aic_matrix[p, q] = np.nan
+        continue  # Evita ARMA(0,0)
+    try:
+        arma_model = ARIMA(close_train_diff, order=(p,0,q)).fit()
+        aic_matrix[p, q] = arma_model.aic
+    except Exception as e:
+        print(f"Errore durante l'addestramento del modello ARMA({p},{q}): {str(e)}")
+        aic_matrix[p, q] = np.nan  # Imposta a NaN se il modello non converge
+
+# Crea un DataFrame per i risultati
+aic_df = pd.DataFrame(aic_matrix, index=range(max_p + 1), columns=range(max_q + 1))
+
+# Trova i valori minimi di AIC e le relative coordinate
+min_aic = aic_df.stack().min()
+min_aic_idx = np.unravel_index(np.nanargmin(aic_matrix), aic_matrix.shape)
+
+# Visualizza la heatmap con Seaborn
+plt.figure(figsize=(10, 8))
+sns.heatmap(aic_df, annot=True, cmap='viridis', fmt='.1f', cbar=True)
+plt.title('Heatmap dei valori AIC per i modelli ARMA(p,q)', size=18, pad=15)
+plt.xlabel('q', size=16, labelpad=15)
+plt.ylabel('p', size=16, labelpad=15)
+#plt.scatter(min_aic_idx[1], min_aic_idx[0], marker='X', color='red', s=100, label=f'Min AIC: {min_aic}')
+rect = plt.Rectangle((min_aic_idx[1], min_aic_idx[0]), 1, 1, fill=False, edgecolor='orangered', linewidth=2)
+plt.gca().add_patch(rect)
+plt.show()
 
 
 
+# modello migliore è ARMA(3,7)
+model_ar_3_ma_7 = ARIMA(close_train_diff, order=(3,0,7))
+model_ar_3_ma_7_fit = model_ar_3_ma_7.fit()
+model_ar_3_ma_7_fit.summary()
 
+residui_ar_3_ma_7 = model_ar_3_ma_7_fit.resid
+var = residui_ar_3_ma_7.var()
+sd = np.sqrt(var)
+mean = residui_ar_3_ma_7.mean()
 
+plt.rcParams.update({'figure.figsize':(15,7)})
+fig, ax = plt.subplots(1,2)
+residui_ar_3_ma_7.plot(ax=ax[0], c='blue'); ax[0].set_title('Time plot', size=18); ax[0].set_xlabel('Data', size=16); ax[0].set_ylabel('Rendimento %', size=16)
+residui_ar_3_ma_7.plot(kind='hist', bins=50, ax=ax[1], color='blue'); ax[1].set_title('Istogramma', size=18); ax[1].set_xlabel('Rendimento %', size=16); ax[1].set_ylabel('Frequenza', size=16)
+ax[0].axhline(y=mean, color='red', linestyle='--', label=r'$\mu$', lw=2)
+ax[1].axvline(x=sd, color='red', linestyle='--', label=r'+1 $\sigma$', lw=2)
+ax[1].axvline(x=-sd, color='red', linestyle='--', label=r'-1 $\sigma$', lw=2)
+ax[1].axvline(x=mean, color='orange', linestyle='--', label=r'$\mu$', lw=2)
+ax[0].legend()
+ax[1].legend()
+fig.suptitle('Analisi grafica dei residui del modello ARMA(3,7):', size=20)
+plt.show()
 
-
-
-
-
-
-
-
+plt.rcParams.update({'figure.figsize':(10,7)})
+plot_acf(residui_ar_3_ma_7,auto_ylims=True, lags=40, zero=False, c='blue')
+plt.xlabel('Lag', size=16)
+plt.title('ACF dei residui del modello ARMA(3,7)', size=20)
+plt.show()
 
 
 
