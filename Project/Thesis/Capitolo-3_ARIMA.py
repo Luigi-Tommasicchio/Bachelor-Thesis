@@ -531,7 +531,6 @@ plt.title('Forecasts per il periodo di test', size=20, pad=15)
 plt.legend(fontsize=10)
 plt.xticks(fontsize=13)
 plt.yticks(fontsize=13)
-plt.savefig('grafico.png', dpi=300)
 plt.show()
 
 # Calcolo il mean square error delle previsioni 
@@ -553,11 +552,29 @@ benchmarks_errors
 
 
 
+# rolling window forecast: 
+close_test_diff_copy = close_test_diff.copy()
+close_train_diff_copy = close_train_diff.copy()['Close']
 
+window_size = 1
+iterations = int(len(close_test)/window_size)
+forecast = pd.Series()
+start = 0
 
+for i in range(iterations):
+    model = ARIMA(close_train_diff_copy, order=(3,0,7)).fit()
+    forecast = forecast._append(model.forecast(steps=window_size))
+    close_train_diff_copy = close_train_diff_copy._append(close_test_diff_copy[start:start+window_size])
+    close_train_diff_copy = close_train_diff_copy[window_size:]
+    print(len(close_train_diff_copy))
+    start += window_size
 
+price_forecast_rolling = ultimo_prezzo * (1 + forecast / 100).cumprod()
 
-
+price_forecast_rolling.plot(label='Rolling Predictions')
+close_test.Close.plot(label='Close Test')
+plt.legend()
+plt.show()
 
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
