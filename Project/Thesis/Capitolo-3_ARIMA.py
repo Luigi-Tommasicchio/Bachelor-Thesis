@@ -503,24 +503,57 @@ plt.title('ACF dei residui del modello ARMA(3,7)', size=20)
 plt.show()
 
 
-forecast_ar_9 = model_ar_9_fit.predict(len(close_test_diff))
-forecast_ma_14 = model_ma_14_fit.forecast(len(close_test_diff))
-forecast_ar_3_ma_7 = model_ar_3_ma_7_fit.forecast(len(close_test_diff))
+# Si producono i forecast con ciascun modello:
+forecast_ar_9 = model_ar_9_fit.forecast(len(close_test))
+forecast_ma_14 = model_ma_14_fit.forecast(len(close_test))
+forecast_ar_3_ma_7 = model_ar_3_ma_7_fit.forecast(len(close_test))
 
+# Si estrae l'ultimo prezzo disponibile nel set di addestramento:
 ultimo_prezzo = close_train['Close'].iloc[-1]
 
+# Si trasformano i forecast (rendimenti percentuali giornalieri) in prezzi:
 price_forecast_ar_9 = ultimo_prezzo * (1 + forecast_ar_9 / 100).cumprod()
 price_forecast_ma_14 = ultimo_prezzo * (1 + forecast_ma_14 / 100).cumprod()
 price_forecast_ar_3_ma_7 = ultimo_prezzo * (1 + forecast_ar_3_ma_7 / 100).cumprod()
 
-
-close_test.Close[:100].plot()
-close_test.drift_forecast[:100].plot()
-price_forecast_ar_9[:100].plot()
-price_forecast_ma_14[:100].plot()
-price_forecast_ar_3_ma_7[:100].plot()
-plt.legend()
+import matplotlib.patheffects as pe
+plt.rcParams['figure.dpi'] = 150
+plt.rcParams.update({'figure.figsize':(15,7)})
+close_train.Close[-25:].plot(label='Train set [-25:]', color='blue', style='--', alpha=0.5, lw=2)
+close_test.Close.plot(label='Test set', color='blue', lw=2)
+close_test.drift_forecast.plot(label='Forecasts Drift', color='darkviolet', lw=2)
+price_forecast_ar_9.plot(label='Forecasts AR(9)', color='red', zorder=3, lw=2)
+price_forecast_ma_14.plot(label='Forecasts MA(14)', color='seagreen', lw=5, path_effects=[pe.Stroke(linewidth=0, foreground='lime'), pe.Normal()])
+price_forecast_ar_3_ma_7.plot(label='Forecasts ARMA(3,7)', color='gold', lw=2)
+plt.ylabel('Prezzi ($)', size=16)
+plt.xlabel('Data', size=16)
+plt.title('Forecasts per il periodo di test', size=20, pad=15)
+plt.legend(fontsize=10)
+plt.xticks(fontsize=13)
+plt.yticks(fontsize=13)
+plt.savefig('grafico.png', dpi=300)
 plt.show()
+
+# Calcolo il mean square error delle previsioni 
+close_test['ar_9'] = price_forecast_ar_9
+close_test['ma_14'] = price_forecast_ma_14
+close_test['ar_3_ma_7'] = price_forecast_ar_3_ma_7
+
+from sklearn.metrics import mean_squared_error
+drift_mse = round(mean_squared_error(close_test.Close, close_test.drift_forecast),2)
+ar_mse = round(mean_squared_error(close_test.Close, close_test.ar_9),2)
+ma_mse = round(mean_squared_error(close_test.Close, close_test.ma_14),2)
+arma_mse = round(mean_squared_error(close_test.Close, close_test.ar_3_ma_7),2)
+
+benchmarks_errors = pd.DataFrame({'MSE': [drift_mse, ar_mse, ma_mse, arma_mse]}, index = ['Drift Forecast','AR(9)','MA(14)','ARMA(3,7)'])
+benchmarks_errors
+
+
+
+
+
+
+
 
 
 
@@ -538,11 +571,11 @@ fig, ax = plt.subplots(figsize=(10, 6))
 ax.plot(close_train_diff, label='Dati osservati', color='blue')
 
 # Plotta le previsioni
-forecast = model_ar_1_fit.forecast(steps=100)  # Numero di passi previsti nel futuro
+forecast = model_ar_9_fit.forecast(steps=len(close_test))  # Numero di passi previsti nel futuro
 ax.plot(forecast, label='Previsioni', color='red')
 
 # Plotta gli intervalli di confidenza
-forecast_ci = model_ar_1_fit.get_forecast(steps=100).conf_int()  # Calcola gli intervalli di confidenza
+forecast_ci = model_ar_1_fit.get_forecast(steps=len(close_test)).conf_int()  # Calcola gli intervalli di confidenza
 ax.fill_between(x=forecast_ci.index, y1=forecast_ci.iloc[:,0], y2=forecast_ci.iloc[:,1], color='lightgrey')
 
 # Aggiungi etichette, legenda, titolo, ecc.
