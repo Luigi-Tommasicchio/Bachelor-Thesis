@@ -503,6 +503,24 @@ plt.title('ACF dei residui del modello ARMA(3,7)', size=20)
 plt.show()
 
 
+forecast_ar_9 = model_ar_9_fit.predict(len(close_test_diff))
+forecast_ma_14 = model_ma_14_fit.forecast(len(close_test_diff))
+forecast_ar_3_ma_7 = model_ar_3_ma_7_fit.forecast(len(close_test_diff))
+
+ultimo_prezzo = close_train['Close'].iloc[-1]
+
+price_forecast_ar_9 = ultimo_prezzo * (1 + forecast_ar_9 / 100).cumprod()
+price_forecast_ma_14 = ultimo_prezzo * (1 + forecast_ma_14 / 100).cumprod()
+price_forecast_ar_3_ma_7 = ultimo_prezzo * (1 + forecast_ar_3_ma_7 / 100).cumprod()
+
+
+close_test.Close[:100].plot()
+close_test.drift_forecast[:100].plot()
+price_forecast_ar_9[:100].plot()
+price_forecast_ma_14[:100].plot()
+price_forecast_ar_3_ma_7[:100].plot()
+plt.legend()
+plt.show()
 
 
 
@@ -537,90 +555,6 @@ plt.title('Previsioni AR(1) con intervalli di confidenza')
 plt.show()
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-model_ar_7 = ARIMA(close_train_diff[1:], order=(7,0,0))
-model_ar_7_fit = model_ar_7.fit()
-model_ar_7_fit.summary()
-
-LLR_test(model_ar_1, model_ar_7, DF=6)
-
-model_ar_8 = ARIMA(close_train_diff[1:], order=(8,0,0))
-model_ar_8_fit = model_ar_8.fit()
-model_ar_8_fit.summary()
-
-LLR_test(model_ar_1, model_ar_8, DF=7)
-
-model_ar_9 = ARIMA(close_train_diff[1:], order=(9,0,0))
-model_ar_9_fit = model_ar_9.fit()
-model_ar_9_fit.summary()
-
-LLR_test(model_ar_8, model_ar_9, DF=1)
-LLR_test(model_ar_1, model_ar_9, DF=8)
-
-model_ar_10 = ARIMA(close_train_diff[1:], order=(10,0,0))
-model_ar_10_fit = model_ar_10.fit()
-model_ar_10_fit.summary()
-
-model_ar_10_fit.resid.plot()
-plt.show()
-
-
-LLR_test(model_ar_9, model_ar_10, DF=1)
-LLR_test(model_ar_1, model_ar_10, DF=9)
-
-
-
-
-forecasts_ar = model_ar_1_fit.forecast(len(close_test_diff))
-
-model_ar_9 = ARIMA(close_train_diff[1:], order=(9,0,0)) # fittiamo sul test di training
-model_ar_9_fit = model_ar_9.fit()
-model_ar_9_fit.summary()
-forecasts_ar = model_ar_9_fit.forecast(len(close_test_diff)) # forecast per il numero di osservazioni presenti nel test set
-
-date_range = pd.date_range(start=close_test.index.min(), periods=len(forecasts_ar), freq='B')
-forecasts_ar = pd.Series(forecasts_ar, index=date_range)
-plt.plot(forecasts_ar)
-plt.plot(close_test_diff)
-plt.show()
-
-# ADESSO trasformo i forecast appena effettuati in prezzi effettivi in dollari e li compariamo con il test set
-forecasted_price_ar = []
-start_price = close_train.Close[-1]
-forecasted_price_ar.append(start_price)
-
-for i in range(len(forecasts)):
-    new_price = forecasted_price_ar[-1] + ((forecasts[i])/100) * forecasted_price_ar[-1]
-    forecasted_price_ar.append(new_price)
-
-date_range = pd.date_range(start=close_test.index.min(), periods=len(forecasted_price_ar)-1, freq='B')
-
-# Creare una serie Pandas con i prezzi e le date come indice
-forecasted_price_ar = pd.Series(forecasted_price_ar[1:], index=date_range)
-
-plt.plot(forecasted_price_ar)
-close_train.Close.plot()
-close_test.Close.plot()
-close_test.drift_forecast.plot()
-plt.show()   
-
 
 ################################################################################################################################################
 # ARIMA FORECASTING with custom steps-ahead
@@ -658,191 +592,4 @@ close_train.Close.plot()
 close_test.Close.plot()
 close_test.drift_forecast.plot()
 plt.show()   
-
-# 5.1) Analisi dei residui del modello AR(9): 
-
-residui = model_ar_9_fit.resid
-residui.mean()
-residui.var()
-adf_test(residui)
-
-plot_acf(residui, zero=False, auto_ylims=True, lags=40)
-plt.show()
-
-residui.plot()
-plt.show()
-
-#################################################################################################################################################
-
-plot_acf(close_train_diff, zero=False, auto_ylims=True, lags=40)
-plt.show()
-
-model_ma_1 = ARIMA(close_train_diff[1:], order = (0,0,1))
-model_ma_1_fit = model_ma_1.fit()
-model_ma_1_fit.summary()
-
-model_ma_2 = ARIMA(close_train_diff[1:], order = (0,0,2))
-model_ma_2_fit = model_ma_2.fit()
-print(model_ma_2_fit.summary())
-print("\nLLR test p-value = " + str(LLR_test(model_ma_1, model_ma_2)))
-
-model_ma_3 = ARIMA(close_train_diff[1:], order = (0,0,3))
-model_ma_3_fit = model_ma_3.fit()
-print(model_ma_3_fit.summary())
-print("\nLLR test p-value = " + str(LLR_test(model_ma_2, model_ma_3)))
-
-model_ma_4 = ARIMA(close_train_diff[1:], order = (0,0,4))
-model_ma_4_fit = model_ma_4.fit()
-print(model_ma_4_fit.summary())
-print("\nLLR test p-value = " + str(LLR_test(model_ma_3, model_ma_4)))
-
-model_ma_5 = ARIMA(close_train_diff[1:], order = (0,0,5))
-model_ma_5_fit = model_ma_5.fit()
-print(model_ma_5_fit.summary())
-print("\nLLR test p-value = " + str(LLR_test(model_ma_4, model_ma_5)))
-
-model_ma_6 = ARIMA(close_train_diff[1:], order = (0,0,6))
-model_ma_6_fit = model_ma_6.fit()
-print(model_ma_6_fit.summary())
-print("\nLLR test p-value = " + str(LLR_test(model_ma_5, model_ma_6)))
-
-model_ma_7 = ARIMA(close_train_diff[1:], order = (0,0,7))
-model_ma_7_fit = model_ma_7.fit()
-print(model_ma_7_fit.summary())
-print("\nLLR test p-value = " + str(LLR_test(model_ma_6, model_ma_7)))
-
-model_ma_8 = ARIMA(close_train_diff[1:], order = (0,0,8))
-model_ma_8_fit = model_ma_8.fit()
-print(model_ma_8_fit.summary())
-print("\nLLR test p-value = " + str(LLR_test(model_ma_7, model_ma_8)))
-
-model_ma_9 = ARIMA(close_train_diff[1:], order = (0,0,9))
-model_ma_9_fit = model_ma_9.fit()
-print(model_ma_9_fit.summary())
-print("\nLLR test p-value = " + str(LLR_test(model_ma_1, model_ma_9, DF=8)))
-
-model_ma_10 = ARIMA(close_train_diff[1:], order = (0,0,10))
-model_ma_10_fit = model_ma_10.fit()
-print(model_ma_10_fit.summary())
-print("\nLLR test p-value = " + str(LLR_test(model_ma_1, model_ma_10, DF=9)))
-
-model_ma_11 = ARIMA(close_train_diff[1:], order = (0,0,11))
-model_ma_11_fit = model_ma_11.fit()
-print(model_ma_11_fit.summary())
-print("\nLLR test p-value = " + str(LLR_test(model_ma_10, model_ma_11, DF=1)))
-
-model_ma_1_fit.aic
-model_ma_2_fit.aic
-model_ma_3_fit.aic
-model_ma_4_fit.aic
-model_ma_5_fit.aic
-model_ma_6_fit.aic
-model_ma_7_fit.aic
-model_ma_8_fit.aic
-model_ma_9_fit.aic
-model_ma_10_fit.aic
-model_ma_11_fit.aic
-
-residui_ma = model_ma_10_fit.resid
-residui_ma.mean()
-residui_ma.var()
-residui_ma.plot()
-plt.show()
-adf_test(residui_ma)
-
-
-forecasts_ma = model_ma_10_fit.forecast(len(close_test_diff)) # forecast per il numero di osservazioni presenti nel test set
-
-date_range = pd.date_range(start=close_test.index.min(), periods=len(forecasts_ma), freq='B')
-forecasts_ma = pd.Series(forecasts_ma, index=date_range)
-plt.plot(forecasts_ma)
-plt.plot(close_test_diff)
-plt.show()
-
-# ADESSO trasformo i forecast appena effettuati in prezzi effettivi in dollari e li compariamo con il test set
-forecasted_price_ma = []
-start_price = close_train.Close[-1]
-forecasted_price_ma.append(start_price)
-
-for i in range(len(forecasts_ma)):
-    new_price = forecasted_price_ma[-1] + ((forecasts[i])/100) * forecasted_price_ma[-1]
-    forecasted_price_ma.append(new_price)
-
-date_range = pd.date_range(start=close_test.index.min(), periods=len(forecasted_price_ma)-1, freq='B')
-
-# Creare una serie Pandas con i prezzi e le date come indice
-forecasted_price_ma = pd.Series(forecasted_price_ma[1:], index=date_range)
-
-plt.plot(forecasted_price_ma)
-close_train.Close.plot(c='b')
-close_test.Close.plot(c='r')
-close_test.drift_forecast.plot(c='purple')
-plt.show()   
-
-## LLR solo per modelli nested
-
-
-import yfinance as yf
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-from statsmodels.tsa.arima.model import ARIMA
-from statsmodels.tsa.statespace.sarimax import SARIMAX
-from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
-from sklearn.metrics import mean_squared_error
-
-# Download Apple's daily stock prices
-apple = yf.download("AAPL", start="2019-01-01", end="2024-01-01")
-
-# Calculate daily percentage return
-apple['Daily_Return'] = apple['Adj Close'].pct_change() * 100
-
-# Drop missing values
-apple.dropna(inplace=True)
-
-# Plot the original series
-plt.figure(figsize=(10, 6))
-plt.plot(apple['Daily_Return'], label='Daily Returns')
-plt.title('Apple Daily Returns')
-plt.xlabel('Date')
-plt.ylabel('Daily Returns (%)')
-plt.legend()
-plt.show()
-
-# Split the data into train and test sets (80/20)
-train_size = int(len(apple) * 0.8)
-train, test = apple['Daily_Return'][:train_size], apple['Daily_Return'][train_size:]
-
-# Set frequency of the date index
-train.index = pd.date_range(start=train.index[0], periods=len(train), freq='B')
-test.index = pd.date_range(start=test.index[0], periods=len(test), freq='B')
-
-# Fit MA model
-ma_model = ARIMA(train, order=(0,0,9))
-ma_fit = ma_model.fit()
-
-# Fit AR model
-ar_model = ARIMA(train, order=(10,0,0))
-ar_fit = ar_model.fit()
-
-# Fit ARMA model
-arma_model = ARIMA(train, order=(8,0,7))
-arma_fit = arma_model.fit()
-
-# Forecast
-ma_forecast = ma_fit.forecast(steps=len(test))
-ar_forecast = ar_fit.forecast(steps=len(test))
-arma_forecast = arma_fit.forecast(steps=len(test))
-
-# Plot forecasts
-plt.figure(figsize=(12, 8))
-plt.plot(test.index, test.values, label='Actual')
-plt.plot(test.index, ma_forecast, label='MA Forecast')
-plt.plot(test.index, ar_forecast, label='AR Forecast')
-plt.plot(test.index, arma_forecast, label='ARMA Forecast')
-plt.title('Apple Stock Price Forecast')
-plt.xlabel('Date')
-plt.ylabel('Daily Returns (%)')
-plt.legend()
-plt.show()
 
