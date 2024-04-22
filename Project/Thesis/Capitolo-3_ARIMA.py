@@ -201,33 +201,6 @@ axes[1].set_title("Partial Autocorrelation Function", fontsize=18)
 fig.suptitle('ACF e PACF per la serie di addestramento differenziata', fontsize=20, y=1)
 plt.show()
 
-# 5) Modello AR(9): 
-# Adesso sulla base del PACF della serie originale, provo a fittare un modello AUTOREGRESSIVO.
-# Model Selection in base all'MSE e AIC
-list_mse = []
-aic = []
-for p in range(1,15):
-    model_ar = ARIMA(close_train_diff, order=(p,0,0))
-    model_ar_fit = model_ar.fit()
-    forecasts = model_ar_fit.forecast(len(close_test_diff))
-    mean = close_test_diff.mean()
-    mse = sum((forecasts-mean)**2)/len(close_test_diff)
-    list_mse.append(mse)
-    aic.append(model_ar_fit.aic)
-
-fig, ax = plt.subplots(2, sharex=False)
-list_mse = pd.Series(list_mse)
-aic = pd.Series(aic)
-min_mse = list_mse.idxmin()+1
-min_aic = aic.idxmin()+1
-
-ax[0].plot(range(1,15), list_mse, marker='o', color='blue'); ax[0].set_title('MSE'); ax[0].set_xlabel('Lags')
-ax[0].scatter(min_mse, list_mse.min(), marker='o', color='red', lw=3, zorder=3)
-ax[1].plot(range(1,15), aic, marker='o', color='blue'); ax[1].set_title('AIC'); ax[1].set_xlabel('Lags')
-ax[1].scatter(min_aic, aic.min(), marker='o', color='red', lw=3, zorder=3)
-fig.subplots_adjust(hspace=0.5)
-plt.show()
-
 
 # Scegliamo il modello AR avendo esso il minor AIC
 # modello AR 1
@@ -277,18 +250,27 @@ plt.show()
 
 # Ciclo FOR per addestrare modelli AR con ordini da 1 a 15 e calcolare le metriche
 aic = []
+bic = []
+hqic = []
 sse = []
 
 for i in range(1, 21):
     model = ARIMA(close_train_diff[1:], order=(i,0,0)).fit()
     aic.append(model.aic)
+    bic.append(model.bic)
+    hqic.append(model.hqic)
     sse.append(model.sse)
 # Visualizzazione delle metriche
 fig, ax = plt.subplots(1,2, figsize=(13, 5))
 plt.subplots_adjust(hspace=.5, wspace=.3)
-ax[0].plot(range(1, 21), aic, label='AIC', color='blue', lw=2); ax[0].set_xlabel('Lags', size=14); ax[0].set_title('Akaike Information Criterion', size=16)
+ax[0].plot(range(1, 21), aic, label='AIC', color='blue', lw=2); ax[0].set_xlabel('Lags', size=14); ax[0].set_title('Criteri Informativi', size=16)
+ax[0].plot(range(1, 21), bic, label='BIC', color='orange', lw=2); ax[0].set_xlabel('Lags', size=14)
+ax[0].plot(range(1, 21), hqic, label='HQIC', color='green', lw=2); ax[0].set_xlabel('Lags', size=14)
 ax[1].plot(range(1, 21), sse, label='SSE', color='blue', lw=2); ax[1].set_xlabel('Lags', size=14); ax[1].set_title('Sum of Squared Errors', size=16)
-ax[0].scatter(9, aic[8], zorder=3, color='red', lw=4)
+ax[0].scatter(aic.index(min(aic))+1, min(aic), zorder=3, color='red', lw=4)
+ax[0].scatter(bic.index(min(bic))+1, min(bic), zorder=3, color='red', lw=4)
+ax[0].scatter(hqic.index(min(hqic))+1, min(hqic), zorder=3, color='red', lw=4)
+ax[0].legend()
 fig.suptitle('Metriche di valutazione dei modelli AR(p)', size=20, y=1.0)
 ax[0].set_xticks(range(1, 21))
 ax[1].set_xticks(range(1, 21))
@@ -382,20 +364,89 @@ ax[0].scatter(x=lags, y=ciao, zorder=3, c='orangered')
 
 # plotto a destra il minimo dell'aic:
 aic = []
+bic = []
+hqic = []
 for i in range(1, 21):
     model = ARIMA(close_train_diff[1:], order=(0,0,i)).fit()
     aic.append(model.aic)
+    bic.append(model.bic)
+    hqic.append(model.hqic)
 # Visualizzazione delle metriche
 ax[1].plot(range(1, 21), aic, label='AIC', color='blue', lw=2); ax[1].set_xlabel('Lags', size=14); ax[1].set_title('Akaike Information Criterion', size=16)
-ax[1].scatter(14, aic[13], zorder=3, color='red', lw=4)
+ax[1].plot(range(1, 21), bic, label='BIC', color='orange', lw=2); ax[1].set_xlabel('Lags', size=14); ax[1].set_title('Bayesian Information Criterion', size=16)
+ax[1].plot(range(1, 21), hqic, label='HQIC', color='green', lw=2); ax[1].set_xlabel('Lags', size=14); ax[1].set_title('HQ Information Criterion', size=16)
+ax[1].scatter(aic.index(min(aic))+1, min(aic), zorder=3, color='red', lw=4)
+ax[1].scatter(bic.index(min(bic))+1, min(bic), zorder=3, color='red', lw=4)
+ax[1].scatter(hqic.index(min(hqic))+1, min(hqic), zorder=3, color='red', lw=4)
 ax[1].set_xticks(range(1, 21))
 ax[0].set_ylim(-0.2, 1.05)
 ax[0].set_title("ACF plot", fontsize=18)
+plt.legend()
 fig.suptitle('ACF e AIC per la scelta dell\'ordine q', fontsize=20, y=1)
 plt.show()
 
 
-# Fittiamo il modello ma(14)
+# Fittiamo i modelli MA(1), MA(10), MA(14)
+#modello 1
+model_ma_1 = ARIMA(close_train_diff[1:], order=(0,0,1))
+model_ma_1_fit = model_ma_1.fit()
+model_ma_1_fit.summary()
+
+residui_ma_1 = model_ma_1_fit.resid
+var = residui_ma_1.var()
+sd = np.sqrt(var)
+mean = residui_ma_1.mean()
+
+plt.rcParams.update({'figure.figsize':(15,7)})
+fig, ax = plt.subplots(1,2)
+residui_ma_1.plot(ax=ax[0], c='blue'); ax[0].set_title('Time plot', size=18); ax[0].set_xlabel('Data', size=16); ax[0].set_ylabel('Rendimento %', size=16)
+residui_ma_1.plot(kind='hist', bins=50, ax=ax[1], color='blue'); ax[1].set_title('Istogramma', size=18); ax[1].set_xlabel('Rendimento %', size=16); ax[1].set_ylabel('Frequenza', size=16)
+ax[0].axhline(y=mean, color='red', linestyle='--', label=r'$\mu$', lw=2)
+ax[1].axvline(x=sd, color='red', linestyle='--', label=r'+1 $\sigma$', lw=2)
+ax[1].axvline(x=-sd, color='red', linestyle='--', label=r'-1 $\sigma$', lw=2)
+ax[1].axvline(x=mean, color='orange', linestyle='--', label=r'$\mu$', lw=2)
+ax[0].legend()
+ax[1].legend()
+fig.suptitle('Analisi grafica dei residui del modello MA(1):', size=20)
+plt.show()
+
+plt.rcParams.update({'figure.figsize':(10,7)})
+plot_acf(residui_ma_1,auto_ylims=True, lags=40, zero=False, c='blue')
+plt.xlabel('Lags', size=16)
+plt.title('ACF dei residui del modello MA(14)', size=20)
+plt.show()
+
+# modello 10
+model_ma_10 = ARIMA(close_train_diff[1:], order=(0,0,10))
+model_ma_10_fit = model_ma_10.fit()
+model_ma_10_fit.summary()
+
+residui_ma_10 = model_ma_10_fit.resid
+var = residui_ma_10.var()
+sd = np.sqrt(var)
+mean = residui_ma_10.mean()
+
+plt.rcParams.update({'figure.figsize':(15,7)})
+fig, ax = plt.subplots(1,2)
+residui_ma_10.plot(ax=ax[0], c='blue'); ax[0].set_title('Time plot', size=18); ax[0].set_xlabel('Data', size=16); ax[0].set_ylabel('Rendimento %', size=16)
+residui_ma_10.plot(kind='hist', bins=50, ax=ax[1], color='blue'); ax[1].set_title('Istogramma', size=18); ax[1].set_xlabel('Rendimento %', size=16); ax[1].set_ylabel('Frequenza', size=16)
+ax[0].axhline(y=mean, color='red', linestyle='--', label=r'$\mu$', lw=2)
+ax[1].axvline(x=sd, color='red', linestyle='--', label=r'+1 $\sigma$', lw=2)
+ax[1].axvline(x=-sd, color='red', linestyle='--', label=r'-1 $\sigma$', lw=2)
+ax[1].axvline(x=mean, color='orange', linestyle='--', label=r'$\mu$', lw=2)
+ax[0].legend()
+ax[1].legend()
+fig.suptitle('Analisi grafica dei residui del modello MA(10):', size=20)
+plt.show()
+
+plt.rcParams.update({'figure.figsize':(10,7)})
+plot_acf(residui_ma_10,auto_ylims=True, lags=40, zero=False, c='blue')
+plt.xlabel('Lags', size=16)
+plt.title('ACF dei residui del modello MA(10)', size=20)
+plt.show()
+
+
+#modello 14
 model_ma_14 = ARIMA(close_train_diff[1:], order=(0,0,14))
 model_ma_14_fit = model_ma_14.fit()
 model_ma_14_fit.summary()
@@ -440,6 +491,8 @@ pq_combinations = [(p, q) for p in range(max_p + 1) for q in range(max_q + 1)]
 
 # Inizializza una matrice per salvare i valori di AIC
 aic_matrix = np.zeros((max_p + 1, max_q + 1))
+bic_matrix = np.zeros((max_p + 1, max_q + 1))
+hqic_matrix = np.zeros((max_p + 1, max_q + 1))
 
 # Addestra i modelli ARMA e salva i valori AIC
 for p, q in pq_combinations:
@@ -449,18 +502,30 @@ for p, q in pq_combinations:
     try:
         arma_model = ARIMA(close_train_diff, order=(p,0,q)).fit()
         aic_matrix[p, q] = arma_model.aic
+        bic_matrix[p, q] = arma_model.bic
+        hqic_matrix[p, q] = arma_model.hqic
     except Exception as e:
         print(f"Errore durante l'addestramento del modello ARMA({p},{q}): {str(e)}")
-        aic_matrix[p, q] = np.nan  # Imposta a NaN se il modello non converge
+        aic_matrix[p, q] = np.nan
+        bic_matrix[p, q] = np.nan
+        hqic_matrix[p, q] = np.nan  # Imposta a NaN se il modello non converge
 
 # Crea un DataFrame per i risultati
 aic_df = pd.DataFrame(aic_matrix, index=range(max_p + 1), columns=range(max_q + 1))
+bic_df = pd.DataFrame(bic_matrix, index=range(max_p + 1), columns=range(max_q + 1))
+hqic_df = pd.DataFrame(hqic_matrix, index=range(max_p + 1), columns=range(max_q + 1))
 
+hqic_df[0][0] = np.nan
+bic_df[0][0] = np.nan
 # Trova i valori minimi di AIC e le relative coordinate
 min_aic = aic_df.stack().min()
 min_aic_idx = np.unravel_index(np.nanargmin(aic_matrix), aic_matrix.shape)
+min_bic = bic_df.stack().min()
+min_bic_idx = np.unravel_index(np.nanargmin(bic_matrix), bic_matrix.shape)
+min_hqic = hqic_df.stack().min()
+min_hqic_idx = np.unravel_index(np.nanargmin(hqic_matrix), hqic_matrix.shape)
 
-# Visualizza la heatmap con Seaborn
+# Visualizza la heatmap  AIC con Seaborn
 plt.figure(figsize=(10, 8))
 sns.heatmap(aic_df, annot=True, cmap='viridis', fmt='.1f', cbar=True)
 plt.title('Heatmap dei valori AIC per i modelli ARMA(p,q)', size=18, pad=15)
@@ -470,6 +535,30 @@ plt.ylabel('p', size=16, labelpad=15)
 rect = plt.Rectangle((min_aic_idx[1], min_aic_idx[0]), 1, 1, fill=False, edgecolor='orangered', linewidth=2)
 plt.gca().add_patch(rect)
 plt.show()
+
+# Visualizza la heatmap  BIC con Seaborn
+plt.figure(figsize=(10, 8))
+sns.heatmap(bic_df, annot=True, cmap='viridis', fmt='.1f', cbar=True)
+plt.title('Heatmap dei valori BIC per i modelli ARMA(p,q)', size=18, pad=15)
+plt.xlabel('q', size=16, labelpad=15)
+plt.ylabel('p', size=16, labelpad=15)
+#plt.scatter(min_aic_idx[1], min_aic_idx[0], marker='X', color='red', s=100, label=f'Min AIC: {min_aic}')
+rect = plt.Rectangle((min_bic_idx[1], min_bic_idx[0]), 1, 1, fill=False, edgecolor='orangered', linewidth=2)
+plt.gca().add_patch(rect)
+plt.show()
+
+# Visualizza la heatmap  HQIC con Seaborn
+plt.figure(figsize=(10, 8))
+sns.heatmap(hqic_df, annot=True, cmap='viridis', fmt='.1f', cbar=True)
+plt.title('Heatmap dei valori HQIC per i modelli ARMA(p,q)', size=18, pad=15)
+plt.xlabel('q', size=16, labelpad=15)
+plt.ylabel('p', size=16, labelpad=15)
+#plt.scatter(min_aic_idx[1], min_aic_idx[0], marker='X', color='red', s=100, label=f'Min AIC: {min_aic}')
+rect = plt.Rectangle((min_hqic_idx[1], min_hqic_idx[0]), 1, 1, fill=False, edgecolor='orangered', linewidth=2)
+plt.gca().add_patch(rect)
+plt.show()
+
+
 
 
 
@@ -502,18 +591,86 @@ plt.xlabel('Lag', size=16)
 plt.title('ACF dei residui del modello ARMA(3,7)', size=20)
 plt.show()
 
+# modello migliore bic ARMA(2,2)
+model_ar_2_ma_2 = ARIMA(close_train_diff, order=(2,0,2))
+model_ar_2_ma_2_fit = model_ar_2_ma_2.fit()
+model_ar_2_ma_2_fit.summary()
+
+residui_ar_2_ma_2 = model_ar_2_ma_2_fit.resid
+var = residui_ar_2_ma_2.var()
+sd = np.sqrt(var)
+mean = residui_ar_2_ma_2.mean()
+
+plt.rcParams.update({'figure.figsize':(15,7)})
+fig, ax = plt.subplots(1,2)
+residui_ar_2_ma_2.plot(ax=ax[0], c='blue'); ax[0].set_title('Time plot', size=18); ax[0].set_xlabel('Data', size=16); ax[0].set_ylabel('Rendimento %', size=16)
+residui_ar_2_ma_2.plot(kind='hist', bins=50, ax=ax[1], color='blue'); ax[1].set_title('Istogramma', size=18); ax[1].set_xlabel('Rendimento %', size=16); ax[1].set_ylabel('Frequenza', size=16)
+ax[0].axhline(y=mean, color='red', linestyle='--', label=r'$\mu$', lw=2)
+ax[1].axvline(x=sd, color='red', linestyle='--', label=r'+1 $\sigma$', lw=2)
+ax[1].axvline(x=-sd, color='red', linestyle='--', label=r'-1 $\sigma$', lw=2)
+ax[1].axvline(x=mean, color='orange', linestyle='--', label=r'$\mu$', lw=2)
+ax[0].legend()
+ax[1].legend()
+fig.suptitle('Analisi grafica dei residui del modello ARMA(2,2):', size=20)
+plt.show()
+
+plt.rcParams.update({'figure.figsize':(10,7)})
+plot_acf(residui_ar_2_ma_2,auto_ylims=True, lags=40, zero=False, c='blue')
+plt.xlabel('Lag', size=16)
+plt.title('ACF dei residui del modello ARMA(2,2)', size=20)
+plt.show()
+
+# modello migliore bic ARMA(2,2)
+model_ar_2_ma_5 = ARIMA(close_train_diff, order=(2,0,5))
+model_ar_2_ma_5_fit = model_ar_2_ma_5.fit()
+model_ar_2_ma_5_fit.summary()
+
+residui_ar_2_ma_5 = model_ar_2_ma_5_fit.resid
+var = residui_ar_2_ma_5.var()
+sd = np.sqrt(var)
+mean = residui_ar_2_ma_5.mean()
+
+plt.rcParams.update({'figure.figsize':(15,7)})
+fig, ax = plt.subplots(1,2)
+residui_ar_2_ma_5.plot(ax=ax[0], c='blue'); ax[0].set_title('Time plot', size=18); ax[0].set_xlabel('Data', size=16); ax[0].set_ylabel('Rendimento %', size=16)
+residui_ar_2_ma_5.plot(kind='hist', bins=50, ax=ax[1], color='blue'); ax[1].set_title('Istogramma', size=18); ax[1].set_xlabel('Rendimento %', size=16); ax[1].set_ylabel('Frequenza', size=16)
+ax[0].axhline(y=mean, color='red', linestyle='--', label=r'$\mu$', lw=2)
+ax[1].axvline(x=sd, color='red', linestyle='--', label=r'+1 $\sigma$', lw=2)
+ax[1].axvline(x=-sd, color='red', linestyle='--', label=r'-1 $\sigma$', lw=2)
+ax[1].axvline(x=mean, color='orange', linestyle='--', label=r'$\mu$', lw=2)
+ax[0].legend()
+ax[1].legend()
+fig.suptitle('Analisi grafica dei residui del modello ARMA(2,5):', size=20)
+plt.show()
+
+plt.rcParams.update({'figure.figsize':(10,7)})
+plot_acf(residui_ar_2_ma_5,auto_ylims=True, lags=40, zero=False, c='blue')
+plt.xlabel('Lag', size=16)
+plt.title('ACF dei residui del modello ARMA(2,5)', size=20)
+plt.show()
+
 
 # Si producono i forecast con ciascun modello:
+forecast_ar_1 = model_ar_1_fit.forecast(len(close_test))
 forecast_ar_9 = model_ar_9_fit.forecast(len(close_test))
+forecast_ma_1 = model_ma_1_fit.forecast(len(close_test))
+forecast_ma_10 = model_ma_10_fit.forecast(len(close_test))
 forecast_ma_14 = model_ma_14_fit.forecast(len(close_test))
+forecast_ar_2_ma_2 = model_ar_2_ma_2_fit.forecast(len(close_test))
+forecast_ar_2_ma_5 = model_ar_2_ma_5_fit.forecast(len(close_test))
 forecast_ar_3_ma_7 = model_ar_3_ma_7_fit.forecast(len(close_test))
 
 # Si estrae l'ultimo prezzo disponibile nel set di addestramento:
 ultimo_prezzo = close_train['Close'].iloc[-1]
 
 # Si trasformano i forecast (rendimenti percentuali giornalieri) in prezzi:
+price_forecast_ar_1 = ultimo_prezzo * (1 + forecast_ar_1 / 100).cumprod()
 price_forecast_ar_9 = ultimo_prezzo * (1 + forecast_ar_9 / 100).cumprod()
+price_forecast_ma_1 = ultimo_prezzo * (1 + forecast_ma_1 / 100).cumprod()
+price_forecast_ma_10 = ultimo_prezzo * (1 + forecast_ma_10 / 100).cumprod()
 price_forecast_ma_14 = ultimo_prezzo * (1 + forecast_ma_14 / 100).cumprod()
+price_forecast_ar_2_ma_2 = ultimo_prezzo * (1 + forecast_ar_2_ma_2 / 100).cumprod()
+price_forecast_ar_2_ma_5 = ultimo_prezzo * (1 + forecast_ar_2_ma_5 / 100).cumprod()
 price_forecast_ar_3_ma_7 = ultimo_prezzo * (1 + forecast_ar_3_ma_7 / 100).cumprod()
 
 import matplotlib.patheffects as pe
@@ -522,9 +679,14 @@ plt.rcParams.update({'figure.figsize':(15,7)})
 close_train.Close[-25:].plot(label='Train set [-25:]', color='blue', style='--', alpha=0.5, lw=2)
 close_test.Close.plot(label='Test set', color='blue', lw=2)
 close_test.drift_forecast.plot(label='Forecasts Drift', color='darkviolet', lw=2)
-price_forecast_ar_9.plot(label='Forecasts AR(9)', color='red', zorder=3, lw=2)
-price_forecast_ma_14.plot(label='Forecasts MA(14)', color='seagreen', lw=5, path_effects=[pe.Stroke(linewidth=0, foreground='lime'), pe.Normal()])
-price_forecast_ar_3_ma_7.plot(label='Forecasts ARMA(3,7)', color='gold', lw=2)
+price_forecast_ar_1.plot(label='Forecasts AR(1)', color='black', zorder=3, style=':', lw=3)
+price_forecast_ar_9.plot(label='Forecasts AR(9)', color='#faa307',style=':', lw=3)
+price_forecast_ma_1.plot(label='Forecasts MA(1)', color='#f72585', lw=3)
+price_forecast_ma_10.plot(label='Forecasts MA(10)', color='#70e000', zorder=2)
+price_forecast_ma_14.plot(label='Forecasts MA(14)')
+price_forecast_ar_2_ma_2.plot(label='Forecasts ARMA(2,2)')
+price_forecast_ar_2_ma_5.plot(label='Forecasts ARMA(2,5)')
+price_forecast_ar_3_ma_7.plot(label='Forecasts ARMA(3,7)')
 plt.ylabel('Prezzi ($)', size=16)
 plt.xlabel('Data', size=16)
 plt.title('Forecasts per il periodo di test', size=20, pad=15)
@@ -534,17 +696,31 @@ plt.yticks(fontsize=13)
 plt.show()
 
 # Calcolo il mean square error delle previsioni 
-close_test['ar_9'] = price_forecast_ar_9
-close_test['ma_14'] = price_forecast_ma_14
-close_test['ar_3_ma_7'] = price_forecast_ar_3_ma_7
+close_test_copy = close_test.copy()
+close_test_copy['ar_1'] = price_forecast_ar_1
+close_test_copy['ar_9'] = price_forecast_ar_9
+close_test_copy['ma_1'] = price_forecast_ma_1
+close_test_copy['ma_10'] = price_forecast_ma_10
+close_test_copy['ma_14'] = price_forecast_ma_14
+close_test_copy['ar_2_ma_2'] = price_forecast_ar_2_ma_2
+close_test_copy['ar_2_ma_5'] = price_forecast_ar_2_ma_5
+close_test_copy['ar_3_ma_7'] = price_forecast_ar_3_ma_7
 
 from sklearn.metrics import mean_squared_error
-drift_mse = round(mean_squared_error(close_test.Close, close_test.drift_forecast),2)
-ar_mse = round(mean_squared_error(close_test.Close, close_test.ar_9),2)
-ma_mse = round(mean_squared_error(close_test.Close, close_test.ma_14),2)
-arma_mse = round(mean_squared_error(close_test.Close, close_test.ar_3_ma_7),2)
+drift_mse = round(mean_squared_error(close_test_copy.Close, close_test_copy.drift_forecast),2)
+ar1_mse = round(mean_squared_error(close_test_copy.Close, close_test_copy.ar_1),2)
+ar9_mse = round(mean_squared_error(close_test_copy.Close, close_test_copy.ar_9),2)
 
-benchmarks_errors = pd.DataFrame({'MSE': [drift_mse, ar_mse, ma_mse, arma_mse]}, index = ['Drift Forecast','AR(9)','MA(14)','ARMA(3,7)'])
+ma1_mse = round(mean_squared_error(close_test_copy.Close, close_test_copy.ma_1),2)
+ma10_mse = round(mean_squared_error(close_test_copy.Close, close_test_copy.ma_10),2)
+ma14_mse = round(mean_squared_error(close_test_copy.Close, close_test_copy.ma_14),2)
+
+arma22_mse = round(mean_squared_error(close_test_copy.Close, close_test_copy.ar_2_ma_2),2)
+arma25_mse = round(mean_squared_error(close_test_copy.Close, close_test_copy.ar_2_ma_5),2)
+arma37_mse = round(mean_squared_error(close_test_copy.Close, close_test_copy.ar_3_ma_7),2)
+
+benchmarks_errors = pd.DataFrame({'MSE': [drift_mse, ar1_mse, ar9_mse, ma1_mse, ma10_mse, ma14_mse, arma22_mse, arma25_mse, arma37_mse]}, 
+                                 index = ['Drift Forecast','AR(1)','AR(9)','MA(1)','MA(10)','MA(14)','ARMA(2,2)','ARMA(2,5)','ARMA(3,7)'])
 benchmarks_errors
 
 
