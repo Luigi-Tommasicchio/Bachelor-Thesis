@@ -10,13 +10,13 @@ import pandas as pd
 from datetime import datetime
 import matplotlib.pyplot as plt
 
-def scrape_news_headlines(url, max_iterations=5, mac=False, windows=False):
+def scrape_news_headlines(url, max_iterations=5):
     # Opzioni per il browser
     options = Options()
     options.headless = True  # Esegui il browser in modalità headless
 
     # Path del driver del browser
-    chrome_driver_path = "chrome_drivers\chromedriver_windows.exe"
+    chrome_driver_path = "C:\Users\luigi\Desktop\driver\chromedriver.exe"
     
     # Inizializza il browser
     service = Service(chrome_driver_path)
