@@ -111,17 +111,31 @@ plt.show()
 # Capitolo 3: Modellazione
 # 1) ACF della serie non stazionaria e adf test:
 adf_test(close_train)
-
-fig, ax = plt.subplots(1,2, figsize=(20,7))
-ax[0].plot(close_train, color='blue'); ax[0].set_ylabel('Prezzo $', size = 20); ax[0].set_xlabel('Data', size=20); ax[0].set_title('Serie \'close_train\'', size=20)
-plot_acf(close_train,auto_ylims=True, lags=40, zero=True, c='blue', ax=ax[1]); ax[1].set_title('ACF Plot - \'close_train\'', size=20)
-plt.ylabel('Coefficiente di autocorrelazione', size=20)
-plt.xlabel('Lags', size=20)
+plt.rcParams.update({'figure.figsize':(18,8),'xtick.labelsize': 20, 'ytick.labelsize': 20})
+fig, ax = plt.subplots(1,2, figsize=(18,8))
+ax[0].plot(close_train, color='blue'); ax[0].set_ylabel('Prezzo $', size = 18); ax[0].set_xlabel('Data', size=18); ax[0].set_title('Serie \'close_train\'', size=19)
+plot_acf(close_train,auto_ylims=True, lags=40, zero=True, c='blue', ax=ax[1]); ax[1].set_title('ACF Plot - \'close_train\'', size=18)
+plt.ylabel('Coefficiente di autocorrelazione', size=18)
+plt.xlabel('Lags', size=18)
+plt.xticks(size=16)
+plt.yticks(size=16)
+ax[0].tick_params(axis='x', labelsize=16, rotation=30)
+ax[0].tick_params(axis='y', labelsize=16)
 plt.show() 
 
 # 2) seasonal decompose per mostrare che comunque non c'è stagionalità:
 seasonal_decomposition = seasonal_decompose(close_train, extrapolate_trend=1)
-seasonal_decomposition.plot()
+fig, axes = plt.subplots(4, 1, figsize=(10, 8), sharex=True)
+seasonal_decomposition.observed.plot(ax=axes[0], legend=False, color='blue')
+axes[0].set_ylabel('Observed', fontsize=20); axes[0].yaxis.set_label_coords(-0.1, 0.5)  # Imposta il font degli ylabels
+seasonal_decomposition.trend.plot(ax=axes[1], legend=False, color='blue')
+axes[1].set_ylabel('Trend', fontsize=20); axes[1].yaxis.set_label_coords(-0.1, 0.5)  # Imposta il font degli ylabels
+seasonal_decomposition.seasonal.plot(ax=axes[2], legend=False, color='blue')
+axes[2].set_ylabel('Seasonal', fontsize=20); axes[2].yaxis.set_label_coords(-0.1, 0.5)  # Imposta il font degli ylabels
+seasonal_decomposition.resid.plot(ax=axes[3], legend=False, color='blue')
+axes[3].set_ylabel('Residual', fontsize=20); axes[3].yaxis.set_label_coords(-0.1, 0.5)   # Imposta il font degli ylabels
+plt.tight_layout()
+plt.show()
 plt.show()
 
 # 3) Differenzio la serie e faccio nuovamente il test di stazionarietà:
@@ -133,8 +147,10 @@ close_train_diff.plot(c='blue', figsize=(15,7), label='close_train')
 close_test_diff.plot(c='red', label='close_test')
 plt.ylabel('Variazione %', size=20)
 plt.xlabel('Data', size=20)
-plt.title('Rendimenti giornalieri percentuali (%)', size=20)
-plt.legend()
+#plt.title('Rendimenti giornalieri percentuali (%)', size=20)
+plt.xticks(size=18)
+plt.yticks(size=18)
+plt.legend(fontsize=18)
 plt.show()
 
 adf_test(close_train_diff)
@@ -162,7 +178,7 @@ fig, axes = plt.subplots(1, 2, sharex=False)
 
 # Differenziazione di 1° ordine
 # plotto a sinistra l'acf:
-plot_acf(close_train_diff, ax=axes[0],auto_ylims=False, lags=40, zero=True, c='blue', title=None); axes[0].set_xlabel('Lag', size=15)
+plot_acf(close_train_diff, ax=axes[0],auto_ylims=False, lags=40, zero=True, c='blue', title=None); axes[0].set_xlabel('Lag', size=18)
 acf_values, confint = acf(close_train_diff, alpha=0.05, nlags=40)
 lower_bound = confint[1:, 0] - acf_values[1:]
 upper_bound = confint[1:, 1] - acf_values[1:]
@@ -176,9 +192,10 @@ for i in range(len(acf_values[1:])):
     else:
         ciao.append('NaN')
 axes[0].scatter(x=lags, y=ciao, zorder=3, c='orangered')
-
+axes[0].set_xticklabels(np.arange(-5,41, step=5),fontsize=16)
+axes[0].set_yticklabels([-0.2,0.0,0.2,0.4,0.6,0.8,1.0],fontsize=16)
 # plotto a destra il pacf:
-plot_pacf(close_train_diff, ax=axes[1],auto_ylims=False, lags=40, zero=True, method='ols', c='blue', title=None); axes[1].set_xlabel('Lag', size=15)
+plot_pacf(close_train_diff, ax=axes[1],auto_ylims=False, lags=40, zero=True, method='ols', c='blue', title=None); axes[1].set_xlabel('Lag', size=18)
 pacf_values, confint = pacf(close_train_diff, alpha=0.05, nlags=40, method='ols')
 lower_bound = confint[1:, 0] - pacf_values[1:]
 upper_bound = confint[1:, 1] - pacf_values[1:]
@@ -192,13 +209,15 @@ for i in range(len(pacf_values[1:])):
     else:
         ciao.append('NaN')
 axes[1].scatter(x=lags, y=ciao, zorder=3, c='orangered')
-
+axes[1].set_xticklabels(np.arange(-5,41, step=5),fontsize=16)
+axes[1].set_yticklabels([-0.2,0.0,0.2,0.4,0.6,0.8,1.0],fontsize=16)
+# plotto a destra il pacf
 # qui sistemo un po' di parametri per sistemare i grafici:
 axes[0].set_ylim(-0.2, 1.05)
 axes[1].set_ylim(-0.2, 1.05)
-axes[0].set_title("Autocorrelation Function", fontsize=18)
-axes[1].set_title("Partial Autocorrelation Function", fontsize=18)
-fig.suptitle('ACF e PACF per la serie di addestramento differenziata', fontsize=20, y=1)
+axes[0].set_title("Autocorrelation Function", fontsize=20)
+axes[1].set_title("Partial Autocorrelation Function", fontsize=20)
+#fig.suptitle('ACF e PACF per la serie di addestramento differenziata', fontsize=20, y=1)
 plt.show()
 
 
@@ -214,21 +233,21 @@ sd = np.sqrt(var)
 mean = residui_ar_1.mean()
 
 # Analisi grafica dei residui: 
-plt.rcParams.update({'figure.figsize':(15,7)})
+plt.rcParams.update({'figure.figsize':(15,7),'xtick.labelsize': 16, 'ytick.labelsize': 16})
 fig, ax = plt.subplots(1,2)
-residui_ar_1.plot(ax=ax[0], c='blue'); ax[0].set_title('Time plot', size=18); ax[0].set_xlabel('Data', size=16); ax[0].set_ylabel('Rendimento %', size=16)
-residui_ar_1.plot(kind='hist', bins=50, ax=ax[1], color='blue'); ax[1].set_title('Istogramma', size=18); ax[1].set_xlabel('Rendimento %', size=16); ax[1].set_ylabel('Frequenza', size=16)
+residui_ar_1.plot(ax=ax[0], c='blue'); ax[0].set_title('Time plot', size=18); ax[0].set_xlabel('Data', size=18); ax[0].set_ylabel('Rendimento %', size=18)
+residui_ar_1.plot(kind='hist', bins=50, ax=ax[1], color='blue'); ax[1].set_title('Istogramma', size=18); ax[1].set_xlabel('Rendimento %', size=18); ax[1].set_ylabel('Frequenza', size=18)
 ax[0].axhline(y=mean, color='red', linestyle='--', label=r'$\mu$', lw=2)
 ax[1].axvline(x=sd, color='red', linestyle='--', label=r'+1 $\sigma$', lw=2)
 ax[1].axvline(x=-sd, color='red', linestyle='--', label=r'-1 $\sigma$', lw=2)
 ax[1].axvline(x=mean, color='orange', linestyle='--', label=r'$\mu$', lw=2)
 ax[0].legend()
 ax[1].legend()
-fig.suptitle('Analisi grafica dei residui del modello AR(1):', size=20)
+#fig.suptitle('Analisi grafica dei residui del modello AR(1):', size=20)
 plt.show()
 
-plt.rcParams.update({'figure.figsize':(10,7)})
-plot_acf(residui_ar_1,auto_ylims=True, lags=40, zero=False, c='blue')
+plt.rcParams.update({'figure.figsize':(10,7),'xtick.labelsize': 16, 'ytick.labelsize': 16})
+plot_acf(residui_ar_1,auto_ylims=True, lags=40, zero=False, c='blue', title=None)
 acf_values, confint = acf(residui_ar_1, alpha=0.05, nlags=40)
 lower_bound = confint[1:, 0] - acf_values[1:]
 upper_bound = confint[1:, 1] - acf_values[1:]
@@ -245,10 +264,10 @@ plt.scatter(x=lags, y=ciao, zorder=3, c='orangered', lw=2)
 plt.xlabel('Lag', size=18)
 plt.xticks(size=14)
 plt.yticks(size=14)
-plt.title('ACF per i residui del modello AR(1)', size=20)
+#plt.title('ACF per i residui del modello AR(1)', size=20)
 plt.show()
 
-# Ciclo FOR per addestrare modelli AR con ordini da 1 a 15 e calcolare le metriche
+# Ciclo FOR per addestrare modelli AR con ordini da 1 a 20 e calcolare le metriche
 aic = []
 bic = []
 hqic = []
@@ -261,19 +280,19 @@ for i in range(1, 21):
     hqic.append(model.hqic)
     sse.append(model.sse)
 # Visualizzazione delle metriche
-fig, ax = plt.subplots(1,2, figsize=(13, 5))
+fig, ax = plt.subplots(1,2, figsize=(14, 5))
 plt.subplots_adjust(hspace=.5, wspace=.3)
-ax[0].plot(range(1, 21), aic, label='AIC', color='blue', lw=2); ax[0].set_xlabel('Lags', size=14); ax[0].set_title('Criteri Informativi', size=16)
-ax[0].plot(range(1, 21), bic, label='BIC', color='orange', lw=2); ax[0].set_xlabel('Lags', size=14)
-ax[0].plot(range(1, 21), hqic, label='HQIC', color='green', lw=2); ax[0].set_xlabel('Lags', size=14)
-ax[1].plot(range(1, 21), sse, label='SSE', color='blue', lw=2); ax[1].set_xlabel('Lags', size=14); ax[1].set_title('Sum of Squared Errors', size=16)
+ax[0].plot(range(1, 21), aic, label='AIC', color='blue', lw=2); ax[0].set_xlabel('Lags', size=18); ax[0].set_title('Criteri Informativi', size=18)
+ax[0].plot(range(1, 21), bic, label='BIC', color='orange', lw=2); 
+ax[0].plot(range(1, 21), hqic, label='HQIC', color='green', lw=2); 
+ax[1].plot(range(1, 21), sse, label='SSE', color='blue', lw=2); ax[1].set_xlabel('Lags', size=18); ax[1].set_title('Sum of Squared Errors', size=18)
 ax[0].scatter(aic.index(min(aic))+1, min(aic), zorder=3, color='red', lw=4)
 ax[0].scatter(bic.index(min(bic))+1, min(bic), zorder=3, color='red', lw=4)
 ax[0].scatter(hqic.index(min(hqic))+1, min(hqic), zorder=3, color='red', lw=4)
-ax[0].legend()
-fig.suptitle('Metriche di valutazione dei modelli AR(p)', size=20, y=1.0)
-ax[0].set_xticks(range(1, 21))
-ax[1].set_xticks(range(1, 21))
+ax[0].legend(fontsize=16)
+#fig.suptitle('Metriche di valutazione dei modelli AR(p)', size=20, y=1.0)
+ax[0].set_xticks(range(1, 21,2))
+ax[1].set_xticks(range(1, 21,2))
 plt.show()
 
 # Trovato il minimo dell'aic per il lag 9, si procede quindi al fitting del modello nuovo con la stampa del summary.
@@ -288,19 +307,19 @@ mean = residui_ar_9.mean()
 
 plt.rcParams.update({'figure.figsize':(15,7)})
 fig, ax = plt.subplots(1,2)
-residui_ar_9.plot(ax=ax[0], c='blue'); ax[0].set_title('Time plot', size=18); ax[0].set_xlabel('Data', size=16); ax[0].set_ylabel('Rendimento %', size=16)
-residui_ar_9.plot(kind='hist', bins=50, ax=ax[1], color='blue'); ax[1].set_title('Istogramma', size=18); ax[1].set_xlabel('Rendimento %', size=16); ax[1].set_ylabel('Frequenza', size=16)
+residui_ar_9.plot(ax=ax[0], c='blue'); ax[0].set_title('Time plot', size=18); ax[0].set_xlabel('Data', size=18); ax[0].set_ylabel('Rendimento %', size=18)
+residui_ar_9.plot(kind='hist', bins=50, ax=ax[1], color='blue'); ax[1].set_title('Istogramma', size=18); ax[1].set_xlabel('Rendimento %', size=18); ax[1].set_ylabel('Frequenza', size=18)
 ax[0].axhline(y=mean, color='red', linestyle='--', label=r'$\mu$', lw=2)
 ax[1].axvline(x=sd, color='red', linestyle='--', label=r'+1 $\sigma$', lw=2)
 ax[1].axvline(x=-sd, color='red', linestyle='--', label=r'-1 $\sigma$', lw=2)
 ax[1].axvline(x=mean, color='orange', linestyle='--', label=r'$\mu$', lw=2)
 ax[0].legend()
 ax[1].legend()
-fig.suptitle('Analisi grafica dei residui del modello AR(9):', size=20)
+#fig.suptitle('Analisi grafica dei residui del modello AR(9):', size=20)
 plt.show()
 
 fig, ax = plt.subplots(1,2)
-plt.rcParams.update({'figure.figsize':(15,7)})
+plt.rcParams.update({'figure.figsize':(15,7),'xtick.labelsize': 16, 'ytick.labelsize': 16})
 plot_acf(residui_ar_1,auto_ylims=True, lags=40, zero=False, c='blue', ax=ax[0])
 acf_values, confint = acf(residui_ar_1, alpha=0.05, nlags=40)
 lower_bound = confint[1:, 0] - acf_values[1:]
@@ -329,11 +348,11 @@ for i in range(len(acf_values[1:])):
     else:
         ciao.append('NaN')
 ax[1].scatter(x=lags, y=ciao, zorder=3, c='orangered', lw=2)
-fig.suptitle('ACF per i residui', size=20)
-ax[0].set_title('ACF Residui AR(1)', size=16)
-ax[1].set_title('ACF Residui AR(9)', size=16)
-ax[0].set_xlabel('Lags', size=14)
-ax[1].set_xlabel('Lags', size=14)
+#fig.suptitle('ACF per i residui', size=20)
+ax[0].set_title('ACF Residui AR(1)', size=20)
+ax[1].set_title('ACF Residui AR(9)', size=20)
+ax[0].set_xlabel('Lags', size=18)
+ax[1].set_xlabel('Lags', size=18)
 plt.show()
 
 
@@ -347,7 +366,7 @@ fig, ax = plt.subplots(1, 2, sharex=False)
 
 # Differenziazione di 1° ordine
 # plotto a sinistra l'acf:
-plot_acf(close_train_diff, ax=ax[0],auto_ylims=False, lags=40, zero=True, c='blue', title=None); ax[0].set_xlabel('Lags', size=15)
+plot_acf(close_train_diff, ax=ax[0],auto_ylims=False, lags=40, zero=True, c='blue', title=None); ax[0].set_xlabel('Lag', size=18)
 acf_values, confint = acf(close_train_diff, alpha=0.05, nlags=40)
 lower_bound = confint[1:, 0] - acf_values[1:]
 upper_bound = confint[1:, 1] - acf_values[1:]
@@ -372,17 +391,20 @@ for i in range(1, 21):
     bic.append(model.bic)
     hqic.append(model.hqic)
 # Visualizzazione delle metriche
-ax[1].plot(range(1, 21), aic, label='AIC', color='blue', lw=2); ax[1].set_xlabel('Lags', size=14); ax[1].set_title('Akaike Information Criterion', size=16)
-ax[1].plot(range(1, 21), bic, label='BIC', color='orange', lw=2); ax[1].set_xlabel('Lags', size=14); ax[1].set_title('Bayesian Information Criterion', size=16)
-ax[1].plot(range(1, 21), hqic, label='HQIC', color='green', lw=2); ax[1].set_xlabel('Lags', size=14); ax[1].set_title('HQ Information Criterion', size=16)
+ax[1].plot(range(1, 21), aic, label='AIC', color='blue', lw=2); ax[1].set_xlabel('Lag', size=18); ax[1].set_title('Akaike Information Criterion', size=18)
+ax[1].plot(range(1, 21), bic, label='BIC', color='orange', lw=2); ax[1].set_xlabel('Lag', size=18); ax[1].set_title('Bayesian Information Criterion', size=18)
+ax[1].plot(range(1, 21), hqic, label='HQIC', color='green', lw=2); ax[1].set_xlabel('Lag', size=18); ax[1].set_title('Information Criteria', size=18)
 ax[1].scatter(aic.index(min(aic))+1, min(aic), zorder=3, color='red', lw=4)
 ax[1].scatter(bic.index(min(bic))+1, min(bic), zorder=3, color='red', lw=4)
 ax[1].scatter(hqic.index(min(hqic))+1, min(hqic), zorder=3, color='red', lw=4)
-ax[1].set_xticks(range(1, 21))
+ax[1].set_xticks(range(1, 21),size=18)
 ax[0].set_ylim(-0.2, 1.05)
 ax[0].set_title("ACF plot", fontsize=18)
-plt.legend()
-fig.suptitle('ACF e AIC per la scelta dell\'ordine q', fontsize=20, y=1)
+ax[1].tick_params(axis='x', labelsize=16)  # Cambia la dimensione dei ticklabels sull'asse x
+ax[1].tick_params(axis='y', labelsize=16)  # Cambia la dimensione dei ticklabels sull'asse y
+ax[0].tick_params(axis='x', labelsize=16)  # Cambia la dimensione dei ticklabels sull'asse x
+ax[0].tick_params(axis='y', labelsize=16)  # Cambia la dimensione dei ticklabels sull'asse y
+plt.legend(fontsize=15)
 plt.show()
 
 
@@ -457,23 +479,26 @@ var = residui_ma_14.var()
 sd = np.sqrt(var)
 mean = residui_ma_14.mean()
 
-plt.rcParams.update({'figure.figsize':(15,7)})
+plt.rcParams.update({'figure.figsize':(15,7),'xtick.labelsize': 18, 'ytick.labelsize': 18})
 fig, ax = plt.subplots(1,2)
-residui_ma_14.plot(ax=ax[0], c='blue'); ax[0].set_title('Time plot', size=18); ax[0].set_xlabel('Data', size=16); ax[0].set_ylabel('Rendimento %', size=16)
-residui_ma_14.plot(kind='hist', bins=50, ax=ax[1], color='blue'); ax[1].set_title('Istogramma', size=18); ax[1].set_xlabel('Rendimento %', size=16); ax[1].set_ylabel('Frequenza', size=16)
+residui_ma_14.plot(ax=ax[0], c='blue'); ax[0].set_title('Time plot', size=20); ax[0].set_xlabel('Data', size=18); ax[0].set_ylabel('Rendimento %', size=18)
+residui_ma_14.plot(kind='hist', bins=50, ax=ax[1], color='blue'); ax[1].set_title('Istogramma', size=20); ax[1].set_xlabel('Rendimento %', size=18); ax[1].set_ylabel('Frequenza', size=18)
 ax[0].axhline(y=mean, color='red', linestyle='--', label=r'$\mu$', lw=2)
 ax[1].axvline(x=sd, color='red', linestyle='--', label=r'+1 $\sigma$', lw=2)
 ax[1].axvline(x=-sd, color='red', linestyle='--', label=r'-1 $\sigma$', lw=2)
 ax[1].axvline(x=mean, color='orange', linestyle='--', label=r'$\mu$', lw=2)
-ax[0].legend()
-ax[1].legend()
-fig.suptitle('Analisi grafica dei residui del modello MA(14):', size=20)
+ax[0].legend(fontsize=16)
+ax[1].legend(fontsize=16)
+
+#fig.suptitle('Analisi grafica dei residui del modello MA(14):', size=20)
 plt.show()
 
 plt.rcParams.update({'figure.figsize':(10,7)})
-plot_acf(residui_ma_14,auto_ylims=True, lags=40, zero=False, c='blue')
-plt.xlabel('Lags', size=16)
-plt.title('ACF dei residui del modello MA(14)', size=20)
+plot_acf(residui_ma_14,auto_ylims=True, lags=40, zero=False,title=None, c='blue')
+plt.xlabel('Lags', size=18)
+plt.xticks(size=16)
+plt.yticks(size=16)
+#plt.title('ACF dei residui del modello MA(14)', size=20)
 plt.show()
 
 
@@ -574,21 +599,21 @@ mean = residui_ar_3_ma_7.mean()
 
 plt.rcParams.update({'figure.figsize':(15,7)})
 fig, ax = plt.subplots(1,2)
-residui_ar_3_ma_7.plot(ax=ax[0], c='blue'); ax[0].set_title('Time plot', size=18); ax[0].set_xlabel('Data', size=16); ax[0].set_ylabel('Rendimento %', size=16)
-residui_ar_3_ma_7.plot(kind='hist', bins=50, ax=ax[1], color='blue'); ax[1].set_title('Istogramma', size=18); ax[1].set_xlabel('Rendimento %', size=16); ax[1].set_ylabel('Frequenza', size=16)
+residui_ar_3_ma_7.plot(ax=ax[0], c='blue'); ax[0].set_title('Time plot', size=20); ax[0].set_xlabel('Data', size=18); ax[0].set_ylabel('Rendimento %', size=18)
+residui_ar_3_ma_7.plot(kind='hist', bins=50, ax=ax[1], color='blue'); ax[1].set_title('Istogramma', size=20); ax[1].set_xlabel('Rendimento %', size=18); ax[1].set_ylabel('Frequenza', size=18)
 ax[0].axhline(y=mean, color='red', linestyle='--', label=r'$\mu$', lw=2)
 ax[1].axvline(x=sd, color='red', linestyle='--', label=r'+1 $\sigma$', lw=2)
 ax[1].axvline(x=-sd, color='red', linestyle='--', label=r'-1 $\sigma$', lw=2)
 ax[1].axvline(x=mean, color='orange', linestyle='--', label=r'$\mu$', lw=2)
 ax[0].legend()
 ax[1].legend()
-fig.suptitle('Analisi grafica dei residui del modello ARMA(3,7):', size=20)
+#fig.suptitle('Analisi grafica dei residui del modello ARMA(3,7):', size=20)
 plt.show()
 
 plt.rcParams.update({'figure.figsize':(10,7)})
-plot_acf(residui_ar_3_ma_7,auto_ylims=True, lags=40, zero=False, c='blue')
+plot_acf(residui_ar_3_ma_7,auto_ylims=True, lags=40, zero=False, c='blue',title=None)
 plt.xlabel('Lag', size=16)
-plt.title('ACF dei residui del modello ARMA(3,7)', size=20)
+#plt.title('ACF dei residui del modello ARMA(3,7)', size=20)
 plt.show()
 
 # modello migliore bic ARMA(2,2)
@@ -615,9 +640,9 @@ fig.suptitle('Analisi grafica dei residui del modello ARMA(2,2):', size=20)
 plt.show()
 
 plt.rcParams.update({'figure.figsize':(10,7)})
-plot_acf(residui_ar_2_ma_2,auto_ylims=True, lags=40, zero=False, c='blue')
-plt.xlabel('Lag', size=16)
-plt.title('ACF dei residui del modello ARMA(2,2)', size=20)
+plot_acf(residui_ar_2_ma_2,auto_ylims=True, lags=40, zero=False, c='blue',title=None)
+plt.xlabel('Lag', size=18)
+#plt.title('ACF dei residui del modello ARMA(2,2)', size=20)
 plt.show()
 
 # modello migliore bic ARMA(2,2)
@@ -689,10 +714,10 @@ price_forecast_ar_2_ma_5.plot(label='Forecasts ARMA(2,5)')
 price_forecast_ar_3_ma_7.plot(label='Forecasts ARMA(3,7)')
 plt.ylabel('Prezzi ($)', size=16)
 plt.xlabel('Data', size=16)
-plt.title('Forecasts per il periodo di test', size=20, pad=15)
-plt.legend(fontsize=10)
-plt.xticks(fontsize=13)
-plt.yticks(fontsize=13)
+#plt.title('Forecasts per il periodo di test', size=20, pad=15)
+plt.legend(fontsize=12)
+plt.xticks(fontsize=18)
+plt.yticks(fontsize=18)
 plt.show()
 
 # Calcolo il mean square error delle previsioni 

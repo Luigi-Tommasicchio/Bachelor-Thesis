@@ -86,24 +86,25 @@ plt.show()
 
 
 # Creazione della figura e dei tre assi:
-fig, axs = plt.subplots(3, 1, figsize=(9, 13))
+
+fig, axs = plt.subplots(3, 1, figsize=(15, 9))
 
 # Grafico 1:
-axs[0].plot(sp500.index, sp500.Close, color='navy')
-axs[0].set_title('Prezzi di Chiusura S&P 500 (2014-2024', size=21, pad=10)
+axs[0].plot(sp500.index, sp500.Close, color='blue')
+axs[0].set_title('Prezzi di Chiusura S&P 500 (2014-2024)', size=21, pad=10)
 axs[0].set_xlabel('Data', size=16)
 axs[0].set_ylabel('Prezzo $', size=16)
 axs[0].tick_params(axis='both', which='major', labelsize=14)
 
 # Grafico 2:
-axs[1].plot(sp500.index, sp500.wn, color='darkblue', linewidth=0.7)
+axs[1].plot(sp500.index, sp500.wn, color='blue', linewidth=0.7)
 axs[1].set_title('Simulazione White Noise', size=21, pad=10)
 axs[1].set_xlabel('Data', size=16)
 axs[1].set_ylabel('Prezzo $', size=16)
 axs[1].tick_params(axis='both', which='major', labelsize=14)
 
 # Grafico 3:
-axs[2].plot(sp500.index, sp500.rw, color='mediumblue')
+axs[2].plot(sp500.index, sp500.rw, color='blue')
 axs[2].set_title('Simulazione Random Walk', size=21, pad=10)
 axs[2].set_xlabel('Data', size=16)
 axs[2].set_ylabel('Prezzo $', size=16)

@@ -28,14 +28,13 @@ apple.info()
 
 # Plotto i dati come Candlestick Chart
 import mplfinance as mpf
-
 fig, ax = mpf.plot(apple, type='candle',volume=True, style='yahoo', 
-                ylabel='Prezzo', ylabel_lower='Volume', xlabel = 'Data', show_nontrading=False, 
+                ylabel='Prezzo',ylabel_lower='Volume', xlabel = 'Data', show_nontrading=False, 
                 figratio=(4,3), figscale=1.2, xrotation=45, returnfig=True)
-ax[0].set_title('Candlestick chart AAPL', fontsize=16, loc='center')
+ax[0].set_title('Candlestick chart AAPL', fontsize=18, loc='center')
 plt.show()
 
-
+plt.rcParams.keys()
 # Calcolo delle correlazioni tra le colonne del dataframe
 corr = apple.select_dtypes('number').corr()
 
@@ -57,6 +56,7 @@ close = apple['Close']
 close.head()
 close.info()
 
+plt.rcParams.update({'figure.figsize':(15,7),'xtick.labelsize': 16, 'ytick.labelsize': 16})
 close.plot(figsize = (15,7), color='blue', label='Prezzo di Chiusura')
 plt.title('Prezzi di Chiusura AAPL (2019-2024)', size=24, pad=15)
 plt.yticks(size=15)
@@ -88,7 +88,7 @@ close_test.head(2)
 print('Dimensione set di Train: ' + str(len(close_train)) + 
       '\nDimensione set di Test: ' + str(len(close_test)))
 
-
+plt.rcParams.update({'figure.figsize':(15,7),'xtick.labelsize': 19, 'ytick.labelsize': 18})
 close_train.plot(label='Train set', color='blue', figsize=(15,7))
 close_test.plot(label='Test set', color='red')
 plt.yticks(size=15)
@@ -97,7 +97,7 @@ plt.xlim(close.index.min(), close.index.max())
 plt.ylabel('Prezzo $', size=20, labelpad=13)
 plt.xlabel('Data', size=20, labelpad=13)
 plt.title('Prezzi di chiusura AAPL', size=24, pad=15)
-plt.legend()
+plt.legend(fontsize=20)
 plt.show()
 
 
@@ -127,16 +127,18 @@ close_test['drift_forecast'] = drift_forecast
 
 # Plotto i Benchmark
 import matplotlib.patheffects as pe
-
+plt.rcParams.update({'figure.figsize':(15,7),'xtick.labelsize': 20, 'ytick.labelsize': 20})
 close_train.plot(label='Train set', color='blue', figsize=(15,7))
 close_test.Close.plot(label='Test set', color='red')
 close_test.naive_forecast.plot(label='Naive Forecast', color='green', lw=2)
 close_test.drift_forecast.plot(label='Drift Forecast', color='purple', lw=2)
 close_test.mean_forecast.plot(label='Mean Forecast', color='gold', lw=2, path_effects=[pe.Stroke(linewidth=2.5, foreground='black'), pe.Normal()])
-plt.ylabel('Prezzo $')
-plt.xlabel('Data')
-plt.title('Prezzi di chiusura AAPL')
-plt.legend()
+plt.ylabel('Prezzo $', size=20)
+plt.xlabel('Data', size=20)
+plt.yticks(size=18)
+plt.xticks(size=18)
+#plt.title('Prezzi di chiusura AAPL')
+plt.legend(fontsize=17)
 plt.show()
 
 # Calcolo il varie misure di errote per le varie previsioni:
