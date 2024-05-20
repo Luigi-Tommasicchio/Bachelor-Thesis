@@ -1,10 +1,10 @@
-# Importo le librerie necessarie
+# Import the relevant packages
 import yfinance as yf
 import pandas as pd
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-# Download dei dati da Yahoo Finance
+# Download data from yahoo finance
 ticker = 'AAPL'
 start_date = '2019-01-01'
 end_date = '2024-01-01'
@@ -13,12 +13,11 @@ apple = yf.Ticker(ticker).history(ticker, start=start_date, end=end_date, interv
 
 apple.head()
 
-# Controllo il datatype delle colonne
+# Check for datatype and NaNs
 apple.info()
-# Controllo se ci sono valori nulli
 apple.isna().sum()
 
-# Riformatto l'indice da 'datetime' a 'date'
+# Reformat the index from 'datetime' to 'date'
 apple = apple.reset_index()
 apple['Date'] = pd.to_datetime(apple['Date'].dt.date)
 apple.set_index('Date', inplace=True)
@@ -26,7 +25,7 @@ apple.head()
 
 apple.info()
 
-# Plotto i dati come Candlestick Chart
+# Plot the data with a Candlestick Chart
 import mplfinance as mpf
 fig, ax = mpf.plot(apple, type='candle',volume=True, style='yahoo', 
                 ylabel='Prezzo',ylabel_lower='Volume', xlabel = 'Data', show_nontrading=False, 
@@ -35,13 +34,12 @@ ax[0].set_title('Candlestick chart AAPL', fontsize=18, loc='center')
 plt.show()
 
 plt.rcParams.keys()
-# Calcolo delle correlazioni tra le colonne del dataframe
+
+# Create a correlation matrix for all the features
 corr = apple.select_dtypes('number').corr()
 
-# Creazione del grafico a matrice di correlazione
 import seaborn as sns
 
-# Creazione del heatmap delle correlazioni con Seaborn
 plt.figure(figsize=(10, 8))
 sns.heatmap(corr, annot=True, cmap='Blues', fmt=".2f")
 sns.set_theme(font_scale=1.5)
@@ -51,7 +49,7 @@ plt.grid(None)
 plt.title('Heatmap delle Correlazioni', size=30, y=1.02)
 plt.show()
 
-# Estraggo la serie del prezzo di chiusura
+# Extract just the closing prices' series
 close = apple['Close']
 close.head()
 close.info()
@@ -66,7 +64,7 @@ plt.ylabel('Prezzo $', size=20, labelpad=13)
 plt.xlabel('Data', size=20, labelpad=13)
 plt.show()
 
-# Divido i dati in train e test
+# Split the data in train and test sets
 split = int(len(close)*0.8)
 
 close_train = close[:split]
@@ -101,22 +99,22 @@ plt.legend(fontsize=20)
 plt.show()
 
 
-# Creo tre benchmark per l'analisi:
+# Create three benchmarks:
 close_test = close_test.reset_index()
 close_test = pd.DataFrame({'Close':close_test.Close,
                            'Date':close_test.Date})
 close_test = close_test.set_index('Date')
 
-# Benchmark mean
+# MEAN benchmark 
 mean_forecast = close_train.mean().repeat(len(close_test))
 close_test['mean_forecast'] = mean_forecast
 
-# Benchmark Naive
-naive_forecast = close_train[-1]  # Prendi l'ultimo valore del set di addestramento
+# NAIVE benchmark 
+naive_forecast = close_train[-1] 
 close_test['naive_forecast'] = naive_forecast
 
-# Benchmark Drift
-drift = (close_train[-1] - close_train[0]) / len(close_train)  # Calcola il tasso di variazione medio
+# DRIFT benchmark 
+drift = (close_train[-1] - close_train[0]) / len(close_train)
 drift
 drift_forecast = []
 for i in range(len(close_test)):
@@ -125,7 +123,7 @@ for i in range(len(close_test)):
 
 close_test['drift_forecast'] = drift_forecast
 
-# Plotto i Benchmark
+# Plot the benchmarks
 import matplotlib.patheffects as pe
 plt.rcParams.update({'figure.figsize':(15,7),'xtick.labelsize': 20, 'ytick.labelsize': 20})
 close_train.plot(label='Train set', color='blue', figsize=(15,7))
@@ -137,11 +135,10 @@ plt.ylabel('Prezzo $', size=20)
 plt.xlabel('Data', size=20)
 plt.yticks(size=18)
 plt.xticks(size=18)
-#plt.title('Prezzi di chiusura AAPL')
 plt.legend(fontsize=17)
 plt.show()
 
-# Calcolo il varie misure di errote per le varie previsioni:
+# Calculate several error measures for each benchmark method
 from sklearn.metrics import mean_squared_error, root_mean_squared_error, mean_absolute_error, mean_absolute_percentage_error
 
 mean_mse = round(mean_squared_error(close_test.Close, close_test.mean_forecast),2)
@@ -169,7 +166,7 @@ benchmarks_errors = pd.DataFrame({
 benchmarks_errors
 
 
-# Esporto il train set e test set come csv per riutilizzarli in altri file
+# Export the train set e test set as csv to reuse them in the next chapter
 close_train = pd.DataFrame(close_train)
 close_train.to_csv('Project\\Thesis\\Train and test data\\close_train.csv')
 
