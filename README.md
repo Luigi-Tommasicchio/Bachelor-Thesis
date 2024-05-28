@@ -1,9 +1,32 @@
-# Bachelor Thesis
+# Bachelor Thesis in Economics and Management
 
+## Time-Series Analysis and Forecasting Applied to the Stock Market
+Welcome to the repository for my Bachelor thesis in Economics and Management. This project represents my passion for finance, data, and coding, and is a comprehensive guide and empirical study on time-series analysis and forecasting applied to the stock market.
 
-This is going to be a brief description of my bachelor thesis in Economics and Management. Since I'm passionate about finance, data, and coding, I decided to develop a thesis that could include each one of these.
-That's why I went for some sort of guide and empirical thesis about time-series analysis and forecasting applied to the stock market. Now of course I wasn't expecting to actually succeed in predicting
-the future price of any stock so I could get rich, but I totally enjoyed the learning journey. When I decided to go for this thesis research question I didn't know anything about time series or foresting.
-So in the beginning, I spent several hours if not days and weeks trying to get a reasonable understanding of the subject. I used YouTube videos, websites, books, etc... Later I started writing down my thesis and 
-coding in Python to put my knowledge into practice. After several challenges, this is what the final work looks like. I really hope you like it and can learn something from it. If you have any questions or any suggestions to further
-improve the work please contact me, I'd be really happy to answer.
+### Overview
+In this thesis, I explore the fascinating world of time-series analysis and forecasting, specifically applied to stock prices. While predicting future stock prices with certainty remains an elusive goal, the journey of learning and applying these techniques has been immensely rewarding.
+
+### Learning Journey
+When I embarked on this project, I had no prior knowledge of time-series analysis or forecasting. I dedicated countless hours, days, and weeks to understanding the fundamentals and intricacies of the subject. My learning resources included:
+- **YouTube videos**: For visual and practical explanations.
+- **Websites**: For articles, tutorials, and documentation.
+- **Books**: For in-depth theoretical knowledge.
+
+### Implementation
+Armed with my newfound knowledge, I began writing my thesis and implementing the concepts using Python. This process was challenging yet fulfilling, allowing me to apply theoretical concepts to real-world data.
+
+### Repository Contents
+This repository contains the following:
+- **Thesis Document**: A detailed written account of my research, methodology, and findings.
+- **Python Code**: Scripts demonstrating the application of time-series analysis and forecasting techniques, one for each chapter.
+- **Data**: Sample datasets used in the analysis, created with yfinance.
+
+### Goals and Contributions
+- **Educational Resource**: To serve as a guide for students and enthusiasts interested in time-series analysis and stock market forecasting.
+- **Practical Insights**: To provide practical examples of how to implement these techniques using Python.
+- **Foundation for Further Research**: To encourage further exploration and improvement in the field of financial forecasting.
+
+### Feedback and Contributions
+I hope you find this work insightful and educational. If you have any questions, suggestions, or improvements, please feel free to reach out. I would be delighted to hear from you and discuss potential enhancements.
+
+Thank you for visiting, and happy learning!
